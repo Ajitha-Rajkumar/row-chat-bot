@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ROW Application Assistant</title>
+  <style>
+    /* ===== RESET & BASE ===== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e8f0fe 0%, #f5f7ff 100%);
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ===== CHAT CONTAINER ===== */
+    .chat-container {
+      width: 460px;
+      max-width: 96vw;
+      height: 640px;
+      max-height: 92vh;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.12);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== HEADER ===== */
+    .chat-header {
+      background: linear-gradient(135deg, #003366 0%, #005b99 100%);
+      color: #fff;
+      padding: 18px 22px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-shrink: 0;
+    }
+    .chat-header .avatar {
+      width: 44px; height: 44px;
+      background: #fff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .chat-header .info h2 { font-size: 16px; font-weight: 600; }
+    .chat-header .info p  { font-size: 12px; opacity: .85; margin-top: 2px; }
+
+    /* ===== MESSAGES AREA ===== */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+      background: #f9fafc;
+    }
+    .chat-messages::-webkit-scrollbar { width: 5px; }
+    .chat-messages::-webkit-scrollbar-thumb { background: #c5cdd8; border-radius: 10px; }
+
+    /* ===== BUBBLES ===== */
+    .msg { max-width: 85%; animation: fadeUp .3s ease; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .msg.bot { align-self: flex-start; }
+    .msg.user { align-self: flex-end; }
+
+    .msg .bubble {
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.55;
+      word-wrap: break-word;
+    }
+    .msg.bot .bubble {
+      background: #fff;
+      color: #1a1a2e;
+      border: 1px solid #e4e8ee;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+    .msg.user .bubble {
+      background: linear-gradient(135deg, #003366, #005b99);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .msg .bubble strong { color: #003366; }
+    .msg.user .bubble strong { color: #aad4ff; }
+
+    .msg .bubble ul, .msg .bubble ol {
+      margin: 6px 0 2px 18px;
+      font-size: 13.5px;
+    }
+    .msg .bubble li { margin-bottom: 4px; }
+
+    /* ===== QUICK BUTTONS ===== */
+    .quick-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .quick-btn {
+      background: #eef3ff;
+      color: #003366;
+      border: 1px solid #c9d6f0;
+      border-radius: 20px;
+      padding: 7px 14px;
+      font-size: 12.5px;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: inherit;
+    }
+    .quick-btn:hover {
+      background: #003366;
+      color: #fff;
+      border-color: #003366;
+    }
+
+    /* ===== INPUT BAR ===== */
+    .chat-input {
+      padding: 14px 16px;
+      border-top: 1px solid #e8ecf1;
+      display: flex;
+      gap: 10px;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .chat-input input {
+      flex: 1;
+      border: 1.5px solid #dce1ea;
+      border-radius: 24px;
+      padding: 10px 18px;
+      font-size: 14px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color .2s;
+    }
+    .chat-input input:focus { border-color: #005b99; }
+    .chat-input input::placeholder { color: #a0aab5; }
+
+    .chat-input button {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, #003366, #005b99);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform .15s, box-shadow .2s;
+      flex-shrink: 0;
+    }
+    .chat-input button:hover { transform: scale(1.08); box-shadow: 0 3px 10px rgba(0,51,102,.3); }
+
+    /* ===== TYPING INDICATOR ===== */
+    .typing { display: flex; gap: 5px; padding: 8px 0; }
+    .typing span {
+      width: 8px; height: 8px;
+      background: #b0bec5;
+      border-radius: 50%;
+      animation: bounce 1.2s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: .2s; }
+    .typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-6px); }
+    }
+
+    /* ===== INLINE TABLES ===== */
+    .msg .bubble table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 6px 0;
+      font-size: 12.5px;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .msg .bubble table th {
+      background: #003366;
+      color: #fff;
+      padding: 6px 8px;
+      text-align: left;
+      font-weight: 600;
+    }
+    .msg .bubble table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #e8ecf1;
+    }
+    .msg .bubble table tr:nth-child(even) td {
+      background: #f5f8ff;
+    }
+    .msg .bubble table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* ===== STEP CARDS ===== */
+    .step-card {
+      background: #f0f5ff;
+      border-left: 3px solid #005b99;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin: 6px 0;
+      font-size: 13.5px;
+    }
+    .step-card .step-num {
+      font-weight: 700;
+      color: #003366;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="chat-container">
+  <!-- HEADER -->
+  <div class="chat-header">
+    <div class="avatar">🤖</div>
+    <div class="info">
+      <h2>ROW Application Assistant</h2>
+      <p>Ask me anything about the ROW Application</p>
+    </div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div class="chat-messages" id="chatMessages"></div>
+
+  <!-- INPUT -->
+  <div class="chat-input">
+    <input type="text" id="userInput" placeholder="Type your question..." autocomplete="off" />
+    <button id="sendBtn" title="Send">&#10148;</button>
+  </div>
+</div>
+
+<script>
+// ============================
+// KNOWLEDGE BASE
+// ============================
+const KB = [
+  {
+    keywords: ["hello","hi","hey","help","start","menu","what can you do","assist"],
+    answer: `Hi there! 👋 I'm your <strong>ROW Application Assistant</strong>. I can help you with:
+<ul>
+  <li>Creating a ROW Application</li>
+  <li><strong>Roles & Tasks</strong> – Who does what (ROW Executive, SCO, State FC&A)</li>
+  <li><strong>Task Locations</strong> – SHQ / NHQ details</li>
+  <li>Searching for Span / Pole / Crossing details</li>
+  <li>Splitting spans & updating authority</li>
+  <li>Merging applications</li>
+  <li>Application acknowledgement & submission</li>
+  <li>Joint survey details</li>
+  <li>Application processing fee & approvals</li>
+</ul>
+What would you like to know?`,
+    quickButtons: ["Create Application", "Roles & Tasks", "Search Span", "Split Span", "Merge Application", "Submit Application", "Joint Survey", "Processing Fee"]
+  },
+  {
+    keywords: ["access","login","open","navigate","home","k2","fttx","get started","where to start","how to start"],
+    answer: `To <strong>access the ROW Application</strong>:
+<div class="step-card"><span class="step-num">Step 1:</span> Log in to the <strong>K2 platform</strong> and go to the <strong>FTTX Home</strong> screen.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Find the <strong>PUBLIC ROW</strong> tile on the left side.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Click <strong>"Manage Draft Application (Intercity & Intracity)"</strong> to start.</div>
+💡 <em>The FTTX Home URL is: https://ospreplica.jio.com/Runtime/Runtime/Form/FTTX__HOME/</em>`,
+    quickButtons: ["Search Span", "Create Application"]
+  },
+  {
+    keywords: ["create","new","generate","application","create row","create application","how to create","draft"],
+    answer: `To <strong>create a new ROW Application</strong>:
+<div class="step-card"><span class="step-num">Step 1:</span> Go to <strong>"Manage Draft Application"</strong> from the PUBLIC ROW tile.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Select <strong>"NON DIT Draft Application"</strong>.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Fill in search filters (Jio State, Political State, MP, Authority Category, Authority, Network Type).</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Click <strong>"Search"</strong>, then select a Link/Route.</div>
+<div class="step-card"><span class="step-num">Step 5:</span> Click <strong>"Get Span"</strong> to load span details.</div>
+<div class="step-card"><span class="step-num">Step 6:</span> Select the span(s) using the checkboxes.</div>
+<div class="step-card"><span class="step-num">Step 7:</span> Click <strong>"Generate Application"</strong>.</div>
+✅ A success message will show your Application Reference Number.`,
+    quickButtons: ["Search Span", "Split Span", "Merge Application"]
+  },
+  {
+    keywords: ["search","span","pole","crossing","link","route","find","get span","get pole","get crossing","filter","details"],
+    answer: `To <strong>search for Span, Pole, or Crossing details</strong>:
+<div class="step-card"><span class="step-num">Step 1:</span> On the Application Generation screen, fill in these filters:</div>
+<ul>
+  <li><strong>Phase</strong> – Select applicable phase</li>
+  <li><strong>Jio State</strong> – e.g., Chhattisgarh</li>
+  <li><strong>Political State</strong> – e.g., Chhattisgarh</li>
+  <li><strong>MP</strong> – e.g., INCGJGDP01 - Jagdalpur</li>
+  <li><strong>Authority Category</strong> – e.g., NHAI</li>
+  <li><strong>Authority</strong> – e.g., CG NHAI</li>
+  <li><strong>Network Type</strong> – e.g., INTERCITY</li>
+</ul>
+<div class="step-card"><span class="step-num">Step 2:</span> Click <strong>"Search"</strong>.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Select the Link/Route from the dropdown.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Click <strong>"Get Span"</strong>, <strong>"Get Pole"</strong>, or <strong>"Get Crossing"</strong> as needed.</div>
+📋 Results show Feature ID, Length, UOM, Construction Type & Methodology.`,
+    quickButtons: ["Create Application", "Split Span"]
+  },
+  {
+    keywords: ["split","span split","split span","start split","save split","how to split"],
+    answer: `To <strong>split a span</strong> on the GIS Map:
+<div class="step-card"><span class="step-num">Step 1:</span> Go to the <strong>Update Authority from GIS Page</strong>.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Fill in filters: Jio State, State, Maintenance Point, Network Type, Link Id, Span Id, Feature Type.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Click <strong>"Submit"</strong> to load the span on the GIS map.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Click <strong>"Start Split"</strong> and click on the map to mark the split point.</div>
+<div class="step-card"><span class="step-num">Step 5:</span> Click <strong>"Save Split"</strong> to save.</div>
+✅ Success: <em>"Split span data saved successfully."</em>
+
+Other actions available: <strong>Merge Span, Stop Split, Reset Split, ReSplit</strong>.`,
+    quickButtons: ["Update Authority", "Create Application", "Merge Application"]
+  },
+  {
+    keywords: ["authority","update authority","add authority","manage authority","new authority","save authority","nhai","pwd"],
+    answer: `To <strong>manage or update authority</strong>:
+<div class="step-card"><span class="step-num">Step 1:</span> Navigate to <strong>Authority Details</strong> page in Infra Build.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> To add a new authority, select Authority Type: <strong>"New"</strong>.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Fill in: Authority Category (e.g., PWD), Authority Name (e.g., CG PWD), Authority Address.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Set up <strong>JIO State Mapping</strong> (Circle &amp; MP Name).</div>
+<div class="step-card"><span class="step-num">Step 5:</span> Click <strong>"Save Authority"</strong> → Confirm → ✅ <em>"Authority Saved Successfully."</em></div>
+To update authority for spans, select the span in the GIS page, choose the Authority Category & Name, and click <strong>"Update"</strong>.`,
+    quickButtons: ["Split Span", "Create Application"]
+  },
+  {
+    keywords: ["merge","merge application","combine","onefiber","generate merged","multiple application"],
+    answer: `To <strong>merge multiple applications</strong>:
+<div class="step-card"><span class="step-num">Step 1:</span> On FTTX Home, click <strong>"Manage Application OneFiber"</strong> under PUBLIC ROW.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Select <strong>Network Type</strong> (e.g., INTERCITY).</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Fill in search filters and click <strong>"Search"</strong>.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Select the draft applications to merge using checkboxes.</div>
+<div class="step-card"><span class="step-num">Step 5:</span> Review: App Length, Pole Count, Crossing Count, ROW Processing Fee Applicable (Yes/No).</div>
+<div class="step-card"><span class="step-num">Step 6:</span> Click <strong>"Generate Merged Application"</strong>.</div>
+✅ Success: <em>"Merge Application generated successfully."</em>`,
+    quickButtons: ["Submit Application", "Joint Survey"]
+  },
+  {
+    keywords: ["submit","acknowledge","acknowledgement","submission","submit application","task list"],
+    answer: `To <strong>submit an application acknowledgement</strong>:
+<div class="step-card"><span class="step-num">Step 1:</span> Go to <strong>Task List</strong> (FTTXTaskList).</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Find and click <strong>"Submit App Acknowledgement Details"</strong> task under ROW - Application.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Review application details (App Ref No, Authority, Length, Poles, Crossings).</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Upload the <strong>acknowledged copy</strong> of the submitted application (PDF).</div>
+<div class="step-card"><span class="step-num">Step 5:</span> Attach any <strong>other documents</strong> if needed.</div>
+<div class="step-card"><span class="step-num">Step 6:</span> Enter Processing Fee, Payment Type & Payment Instrument No. if applicable.</div>
+<div class="step-card"><span class="step-num">Step 7:</span> Click <strong>"Submit"</strong>.</div>
+✅ Success: <em>"Application submitted."</em>`,
+    quickButtons: ["Joint Survey", "Processing Fee"]
+  },
+  {
+    keywords: ["joint survey","survey","survey finding","survey document","submit joint"],
+    answer: `To <strong>capture Joint Survey details</strong>:
+<div class="step-card"><span class="step-num">Step 1:</span> Go to <strong>Task List</strong> and find <strong>"Submit Joint Survey Findings"</strong> task.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Open the <strong>Joint Survey Findings</strong> form.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Review details: App Ref No, Authority Name, App Length, Crossings, Poles.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Enter the <strong>Date of Joint Survey</strong>.</div>
+<div class="step-card"><span class="step-num">Step 5:</span> Upload the <strong>Survey Finding Document</strong> (e.g., Certificate PDF).</div>
+<div class="step-card"><span class="step-num">Step 6:</span> Add <strong>Comments</strong> (e.g., "Joint survey done").</div>
+<div class="step-card"><span class="step-num">Step 7:</span> Click <strong>"Submit"</strong>. (Or click "Not Applicable" if survey is not required.)</div>
+✅ Success: <em>"Joint Survey Findings Submitted."</em>`,
+    quickButtons: ["Processing Fee", "Submit Application"]
+  },
+  {
+    keywords: ["processing fee","fee","payment","approval","l1","l2","sco","fc&a","fca","capture fee"],
+    answer: `<strong>Application Processing Fee</strong> involves a multi-level approval:
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>ROW Executive</strong> captures the processing fee details.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Fee goes for <strong>L1 Approval</strong> → reviewed by <strong>SCO</strong> (State Circle Office).</div>
+<div class="step-card"><span class="step-num">Step 3:</span> After L1, fee goes for <strong>L2 Approval</strong> → approved by <strong>State FC&A</strong> (Finance, Costing & Accounts).</div>
+✅ Once both levels approve, the processing fee is finalized.
+
+📋 <strong>Approval Flow:</strong> ROW Executive → SCO (L1) → State FC&A (L2)`,
+    quickButtons: ["Create Application", "Submit Application", "Main Menu"]
+  },
+  {
+    keywords: ["workflow","process","flow","lifecycle","steps","overview","what is row","about"],
+    answer: `<strong>ROW Application Lifecycle:</strong>
+<ol>
+  <li><strong>Access</strong> – Log in to K2 → FTTX Home → PUBLIC ROW tile</li>
+  <li><strong>Search</strong> – Find SPAN/POLE/CROSSING details using filters</li>
+  <li><strong>Create</strong> – Select spans → Generate Application</li>
+  <li><strong>Split/Update</strong> – Split spans on GIS map → Update authority</li>
+  <li><strong>Merge</strong> – Combine multiple draft applications into one</li>
+  <li><strong>Acknowledge</strong> – Submit acknowledgement with documents</li>
+  <li><strong>Joint Survey</strong> – Capture survey findings</li>
+  <li><strong>Processing Fee</strong> – Capture fee → L1 (SCO) → L2 (State FC&A) approval</li>
+</ol>
+The application runs on <strong>K2 (workflow)</strong> and <strong>GIS (mapping)</strong> systems as a web application.`,
+    quickButtons: ["Create Application", "Merge Application", "Processing Fee"]
+  },
+  {
+    keywords: ["gis","map","geographic","gis map","route","fiber","network","layer filter"],
+    answer: `The <strong>GIS Map</strong> is used for geographic span management:
+<ul>
+  <li>Displays fiber routes with <strong>color-coded spans</strong></li>
+  <li>Shows span details: RWS Id, Length, Authority Category & Name</li>
+  <li>Allows <strong>span splitting</strong> by clicking on the map</li>
+  <li>Supports <strong>Start Split, Merge Span, Stop Split, Reset Split, ReSplit</strong></li>
+  <li>Includes ROW and Layer Filter tabs for filtering data</li>
+</ul>
+Access it via: <strong>Update ROW Authority (GIS)</strong> from the Authority Details page.`,
+    quickButtons: ["Split Span", "Update Authority"]
+  },
+  {
+    keywords: ["role","who","executive","user","permission","task","assign","responsible","roles and tasks"],
+    answer: `<strong>📋 Complete Task & Role Mapping:</strong>
+<br><br>
+<table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+<tr style="background:#003366;color:#fff;"><th style="padding:6px;border:1px solid #ccc;">Task</th><th style="padding:6px;border:1px solid #ccc;">Role</th><th style="padding:6px;border:1px solid #ccc;">System</th><th style="padding:6px;border:1px solid #ccc;">Location</th></tr>
+<tr><td style="padding:5px;border:1px solid #ddd;">Create ROW Application</td><td style="padding:5px;border:1px solid #ddd;"><strong>ROW Executive</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
+<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Application Acknowledgement</td><td style="padding:5px;border:1px solid #ddd;"><strong>ROW Executive</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
+<tr><td style="padding:5px;border:1px solid #ddd;">Capture Joint Survey Details</td><td style="padding:5px;border:1px solid #ddd;"><strong>ROW Executive</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
+<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Capture Application Processing Fee</td><td style="padding:5px;border:1px solid #ddd;"><strong>ROW Executive</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
+<tr><td style="padding:5px;border:1px solid #ddd;">Processing Fee – Approval L1</td><td style="padding:5px;border:1px solid #ddd;"><strong>SCO</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
+<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Processing Fee – Approval L2</td><td style="padding:5px;border:1px solid #ddd;"><strong>State FC&A</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
+</table>
+<br>All tasks are <strong>Web-based</strong> and performed on <strong>K2 & GIS</strong> systems.`,
+    quickButtons: ["ROW Executive Tasks", "SCO Tasks", "State FC&A Tasks", "Location Info", "Main Menu"]
+  },
+  {
+    keywords: ["row executive","row executive tasks","what does row executive do","executive role","executive tasks","executive responsibility"],
+    answer: `<strong>👤 ROW Executive – Tasks & Responsibilities:</strong>
+<br><br>The ROW Executive (located at <strong>SHQ</strong>) performs the following tasks on <strong>K2 & GIS</strong> (Web):
+<br><br>
+<div class="step-card"><span class="step-num">1.</span> <strong>Create ROW Application</strong> – Search spans, select segments, generate applications</div>
+<div class="step-card"><span class="step-num">2.</span> <strong>Application Acknowledgement</strong> – Submit acknowledgement with documents after application generation</div>
+<div class="step-card"><span class="step-num">3.</span> <strong>Capture Joint Survey Details</strong> – Enter survey date, upload survey findings document, add comments</div>
+<div class="step-card"><span class="step-num">4.</span> <strong>Capture Application Processing Fee</strong> – Enter processing fee details and initiate approval</div>
+<br>📍 <strong>Location:</strong> SHQ (State Headquarters)<br>
+💻 <strong>System:</strong> K2 (Workflow) + GIS (Mapping) | <strong>App Type:</strong> Web`,
+    quickButtons: ["Create Application", "Submit Application", "Joint Survey", "Processing Fee"]
+  },
+  {
+    keywords: ["sco tasks","sco role","state circle","sco approval","sco responsibility","what does sco do","sco do"],
+    answer: `<strong>👤 SCO (State Circle Office) – Tasks & Responsibilities:</strong>
+<br><br>
+<div class="step-card"><span class="step-num">Task:</span> <strong>Capture Application Processing Fee – Approval L1</strong></div>
+<ul>
+  <li>SCO reviews the processing fee submitted by the ROW Executive</li>
+  <li>Provides <strong>Level 1 (L1) Approval</strong> for the processing fee</li>
+  <li>After SCO approves, the fee moves to State FC&A for L2 approval</li>
+</ul>
+📍 <strong>Location:</strong> SHQ (State Headquarters)<br>
+💻 <strong>System:</strong> K2, GIS | <strong>App Type:</strong> Web
+<br><br>📋 <strong>Approval Flow:</strong> ROW Executive → <strong>SCO (L1)</strong> → State FC&A (L2)`,
+    quickButtons: ["State FC&A Tasks", "Processing Fee", "ROW Executive Tasks"]
+  },
+  {
+    keywords: ["state fc&a","fc&a tasks","fca tasks","fca role","finance","costing","accounts","fc&a approval","fc&a responsibility","what does fc&a do","state fca","l2 approval"],
+    answer: `<strong>👤 State FC&A (Finance, Costing & Accounts) – Tasks & Responsibilities:</strong>
+<br><br>
+<div class="step-card"><span class="step-num">Task:</span> <strong>Capture Application Processing Fee – Approval L2</strong></div>
+<ul>
+  <li>State FC&A reviews the processing fee after SCO's L1 approval</li>
+  <li>Provides <strong>Level 2 (L2) Final Approval</strong> for the processing fee</li>
+  <li>Once approved, the processing fee is <strong>finalized</strong></li>
+</ul>
+📍 <strong>Location:</strong> SHQ (State Headquarters)<br>
+💻 <strong>System:</strong> K2, GIS | <strong>App Type:</strong> Web
+<br><br>📋 <strong>Approval Flow:</strong> ROW Executive → SCO (L1) → <strong>State FC&A (L2)</strong> ✅`,
+    quickButtons: ["SCO Tasks", "Processing Fee", "ROW Executive Tasks"]
+  },
+  {
+    keywords: ["location","shq","nhq","where","headquarters","state headquarters","location info","work location","which location"],
+    answer: `<strong>📍 Task Locations in ROW Application:</strong>
+<br><br>All ROW Application tasks are performed at <strong>SHQ (State Headquarters)</strong>:
+<br><br>
+<table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+<tr style="background:#003366;color:#fff;"><th style="padding:6px;border:1px solid #ccc;">Task</th><th style="padding:6px;border:1px solid #ccc;">User / Role</th><th style="padding:6px;border:1px solid #ccc;">Location</th></tr>
+<tr><td style="padding:5px;border:1px solid #ddd;">Create ROW Application</td><td style="padding:5px;border:1px solid #ddd;">ROW Executive</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
+<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Application Acknowledgement</td><td style="padding:5px;border:1px solid #ddd;">ROW Executive</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
+<tr><td style="padding:5px;border:1px solid #ddd;">Capture Joint Survey Details</td><td style="padding:5px;border:1px solid #ddd;">ROW Executive</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
+<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Capture Processing Fee</td><td style="padding:5px;border:1px solid #ddd;">ROW Executive</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
+<tr><td style="padding:5px;border:1px solid #ddd;">Processing Fee – Approval L1</td><td style="padding:5px;border:1px solid #ddd;">SCO</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
+<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Processing Fee – Approval L2</td><td style="padding:5px;border:1px solid #ddd;">State FC&A</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
+</table>
+<br>💡 <strong>SHQ</strong> = State Headquarters – the central location where all ROW Application workflow tasks are carried out.`,
+    quickButtons: ["Roles & Tasks", "ROW Executive Tasks", "Main Menu"]
+  },
+  {
+    keywords: ["who creates","who create application","who generates","create task user","who can create"],
+    answer: `The <strong>Create ROW Application</strong> task is performed by:
+<br><br>
+<div class="step-card"><span class="step-num">👤 Role:</span> <strong>ROW Executive</strong></div>
+<div class="step-card"><span class="step-num">📍 Location:</span> <strong>SHQ</strong> (State Headquarters)</div>
+<div class="step-card"><span class="step-num">💻 System:</span> <strong>K2, GIS</strong> (Web Application)</div>
+<br>The ROW Executive clicks on "Manage ROW Draft Application" tab on the PUBLIC ROW main tile on the K2 screen to begin creating an application.`,
+    quickButtons: ["Create Application", "ROW Executive Tasks", "Roles & Tasks"]
+  },
+  {
+    keywords: ["who submits","who acknowledges","who submit application","acknowledgement user","who does acknowledgement"],
+    answer: `The <strong>Application Acknowledgement</strong> task is performed by:
+<br><br>
+<div class="step-card"><span class="step-num">👤 Role:</span> <strong>ROW Executive</strong></div>
+<div class="step-card"><span class="step-num">📍 Location:</span> <strong>SHQ</strong> (State Headquarters)</div>
+<div class="step-card"><span class="step-num">💻 System:</span> <strong>K2, GIS</strong> (Web Application)</div>
+<br>The task is assigned to the ROW Executive in the Task List after application generation. The user uploads documents and submits the acknowledgement.`,
+    quickButtons: ["Submit Application", "ROW Executive Tasks", "Roles & Tasks"]
+  },
+  {
+    keywords: ["who does survey","who captures survey","survey user","survey role","who does joint survey"],
+    answer: `The <strong>Capture Joint Survey Details</strong> task is performed by:
+<br><br>
+<div class="step-card"><span class="step-num">👤 Role:</span> <strong>ROW Executive</strong></div>
+<div class="step-card"><span class="step-num">📍 Location:</span> <strong>SHQ</strong> (State Headquarters)</div>
+<div class="step-card"><span class="step-num">💻 System:</span> <strong>K2, GIS</strong> (Web Application)</div>
+<br>The ROW Executive enters the joint survey date, uploads the survey finding document, and adds comments.`,
+    quickButtons: ["Joint Survey", "ROW Executive Tasks", "Roles & Tasks"]
+  },
+  {
+    keywords: ["who approves","who approves fee","approval user","approval role","who approves processing fee"],
+    answer: `The <strong>Processing Fee Approval</strong> involves two levels:
+<br><br>
+<div class="step-card"><span class="step-num">Level 1 (L1):</span> <strong>SCO</strong> (State Circle Office) – Reviews and approves the fee first</div>
+<div class="step-card"><span class="step-num">Level 2 (L2):</span> <strong>State FC&A</strong> (Finance, Costing & Accounts) – Gives final approval</div>
+<br>Both roles work at <strong>SHQ</strong> on <strong>K2 & GIS</strong> (Web).
+<br><br>📋 <strong>Full Flow:</strong> ROW Executive (captures fee) → SCO (L1 approval) → State FC&A (L2 approval) ✅`,
+    quickButtons: ["SCO Tasks", "State FC&A Tasks", "Processing Fee"]
+  },
+  {
+    keywords: ["error","issue","problem","not working","fail","stuck","trouble"],
+    answer: `If you're facing issues, try these steps:
+<ul>
+  <li>✅ Make sure you're logged into the <strong>K2 platform</strong></li>
+  <li>✅ Check all <strong>mandatory fields</strong> are filled (marked with *)</li>
+  <li>✅ Ensure correct <strong>Authority Category & Name</strong> are selected</li>
+  <li>✅ Verify the <strong>Network Type</strong> matches (INTERCITY / INTRACITY)</li>
+  <li>✅ Check your <strong>role permissions</strong> – you need ROW Executive role</li>
+  <li>✅ Try refreshing the page or clearing browser cache</li>
+  <li>✅ For GIS issues, ensure correct Link Id and Span Id are selected</li>
+</ul>
+If the problem persists, contact your system administrator.`,
+    quickButtons: ["Main Menu"]
+  },
+  {
+    keywords: ["glossary","abbreviation","meaning","what does","stand for","full form","nld","rws","hdd","ug","dit","fttx","mp","shq"],
+    answer: `<strong>Common Abbreviations:</strong>
+<ul>
+  <li><strong>ROW</strong> – Right of Way</li>
+  <li><strong>K2</strong> – Workflow management platform</li>
+  <li><strong>GIS</strong> – Geographic Information System</li>
+  <li><strong>FTTX</strong> – Fiber to the X</li>
+  <li><strong>SPAN</strong> – Fiber cable segment between two points</li>
+  <li><strong>RWS</strong> – ROW Span identifier</li>
+  <li><strong>NHAI</strong> – National Highways Authority of India</li>
+  <li><strong>PWD</strong> – Public Works Department</li>
+  <li><strong>DIT</strong> – Department of Information Technology</li>
+  <li><strong>SCO</strong> – State Circle Office</li>
+  <li><strong>FC&A</strong> – Finance, Costing & Accounts</li>
+  <li><strong>MP</strong> – Maintenance Point</li>
+  <li><strong>HDD</strong> – Horizontal Directional Drilling</li>
+  <li><strong>UG</strong> – Underground (construction method)</li>
+  <li><strong>NLD</strong> – National Long Distance</li>
+  <li><strong>SHQ</strong> – State Headquarters</li>
+</ul>`,
+    quickButtons: ["Main Menu"]
+  },
+  {
+    keywords: ["thank","thanks","bye","goodbye","ok","okay","got it"],
+    answer: `You're welcome! 😊 Feel free to ask anytime you need help with the ROW Application. I'm here to assist you!`,
+    quickButtons: ["Main Menu"]
+  }
+];
+
+// ============================
+// DOM
+// ============================
+const chatMessages = document.getElementById('chatMessages');
+const userInput    = document.getElementById('userInput');
+const sendBtn      = document.getElementById('sendBtn');
+
+// ============================
+// HELPERS
+// ============================
+function addMessage(html, sender, quickButtons) {
+  const wrapper = document.createElement('div');
+  wrapper.className = `msg ${sender}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = html;
+  wrapper.appendChild(bubble);
+
+  if (quickButtons && quickButtons.length) {
+    const qDiv = document.createElement('div');
+    qDiv.className = 'quick-buttons';
+    quickButtons.forEach(label => {
+      const btn = document.createElement('button');
+      btn.className = 'quick-btn';
+      btn.textContent = label;
+      btn.addEventListener('click', () => handleQuickButton(label));
+      qDiv.appendChild(btn);
+    });
+    wrapper.appendChild(qDiv);
+  }
+
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showTyping() {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'msg bot';
+  wrapper.id = 'typingIndicator';
+  wrapper.innerHTML = '<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingIndicator');
+  if (t) t.remove();
+}
+
+// ============================
+// MATCHING
+// ============================
+function findAnswer(input) {
+  const lower = input.toLowerCase().trim();
+
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const entry of KB) {
+    let score = 0;
+    for (const kw of entry.keywords) {
+      if (lower.includes(kw)) {
+        score += kw.length;           // longer keyword matches = higher score
+        if (lower === kw) score += 10; // exact match bonus
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = entry;
+    }
+  }
+
+  if (bestMatch && bestScore > 0) return bestMatch;
+
+  return {
+    answer: `I'm not sure about that. Could you try asking in a different way? Here are some topics I can help with:`,
+    quickButtons: ["Create Application", "Search Span", "Split Span", "Merge Application", "Submit Application", "Joint Survey", "Processing Fee", "Glossary", "Main Menu"]
+  };
+}
+
+// ============================
+// HANDLE INPUT
+// ============================
+function handleUserMessage(text) {
+  if (!text.trim()) return;
+  addMessage(text, 'user');
+  userInput.value = '';
+
+  showTyping();
+
+  setTimeout(() => {
+    removeTyping();
+    const result = findAnswer(text);
+    addMessage(result.answer, 'bot', result.quickButtons);
+  }, 500 + Math.random() * 400);
+}
+
+function handleQuickButton(label) {
+  const map = {
+    "Main Menu": "hello",
+    "Create Application": "how to create a new ROW application",
+    "Search Span": "how to search for span details",
+    "Split Span": "how to split a span",
+    "Merge Application": "how to merge applications",
+    "Submit Application": "how to submit application acknowledgement",
+    "Joint Survey": "how to capture joint survey details",
+    "Processing Fee": "how to capture processing fee",
+    "Update Authority": "how to update authority",
+    "Glossary": "glossary abbreviations",
+    "Roles & Tasks": "roles and tasks",
+    "ROW Executive Tasks": "row executive tasks",
+    "SCO Tasks": "sco tasks",
+    "State FC&A Tasks": "state fc&a tasks",
+    "Location Info": "location info shq"
+  };
+  const query = map[label] || label;
+  handleUserMessage(query);
+}
+
+// ============================
+// EVENTS
+// ============================
+sendBtn.addEventListener('click', () => handleUserMessage(userInput.value));
+userInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleUserMessage(userInput.value);
+});
+
+// ============================
+// WELCOME MESSAGE
+// ============================
+setTimeout(() => {
+  addMessage(
+    `Hello! 👋 Welcome to the <strong>ROW Application Assistant</strong>.<br><br>I can guide you through the entire ROW Application process — from creating applications to processing fee approvals. You can also ask me about <strong>roles, tasks, users & locations</strong>.<br><br>Choose a topic below or type your question!`,
+    'bot',
+    ["Create Application", "Roles & Tasks", "Search Span", "Split Span", "Merge Application", "Submit Application", "Joint Survey", "Processing Fee", "Glossary"]
+  );
+}, 400);
+</script>
+
+</body>
+</html>
