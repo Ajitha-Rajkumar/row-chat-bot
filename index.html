@@ -6,709 +6,1170 @@
   <title>ROW Application Assistant</title>
   <style>
     /* ===== RESET & BASE ===== */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #e8f0fe 0%, #f5f7ff 100%);
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --primary:#003d5c;--primary-dark:#002a3f;--primary-light:#005f8a;
+      --accent:#0078d4;--accent-hover:#106ebe;
+      --green:#1a8f3c;--orange:#d4820a;--red:#c42b1c;
+      --bg:#dce8f0;--card:#ffffff;--text:#1e2a36;--text-light:#5a6577;
+      --border:#dce3ec;--shadow:0 8px 40px rgba(0,30,60,.12);
+      --radius:18px;--radius-lg:22px;
+    }
+    html,body{height:100%;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;
+      display:flex;align-items:center;justify-content:center;
     }
 
-    /* ===== CHAT CONTAINER ===== */
-    .chat-container {
-      width: 460px;
-      max-width: 96vw;
-      height: 640px;
-      max-height: 92vh;
-      background: #fff;
-      border-radius: 20px;
-      box-shadow: 0 12px 40px rgba(0,0,0,.12);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
+    /* ===== LAYOUT ===== */
+    .app{
+      display:flex;flex-direction:column;
+      width:740px;
+      height:90vh;
+      background:var(--card);
+      border-radius:var(--radius-lg);
+      box-shadow:var(--shadow);
+      overflow:hidden;
     }
 
-    /* ===== HEADER ===== */
-    .chat-header {
-      background: linear-gradient(135deg, #003366 0%, #005b99 100%);
-      color: #fff;
-      padding: 18px 22px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-shrink: 0;
+    /* ===== TOP BAR ===== */
+    .topbar{
+      height:72px;
+      background:linear-gradient(135deg,var(--primary-dark) 0%,var(--primary) 40%,var(--primary-light) 100%);
+      display:flex;align-items:center;padding:0 28px;gap:16px;flex-shrink:0;
+      border-radius:var(--radius-lg) var(--radius-lg) 0 0;
     }
-    .chat-header .avatar {
-      width: 44px; height: 44px;
-      background: #fff;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
+    .topbar .bot-avatar{
+      width:46px;height:46px;background:rgba(255,255,255,.15);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;
+      border:2px solid rgba(255,255,255,.25);
     }
-    .chat-header .info h2 { font-size: 16px; font-weight: 600; }
-    .chat-header .info p  { font-size: 12px; opacity: .85; margin-top: 2px; }
+    .topbar .title-group{display:flex;flex-direction:column;gap:2px}
+    .topbar .title{font-size:17px;font-weight:700;color:#fff;letter-spacing:.3px}
+    .topbar .subtitle{font-size:12.5px;color:rgba(255,255,255,.7);font-weight:400}
 
-    /* ===== MESSAGES AREA ===== */
-    .chat-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 18px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      scroll-behavior: smooth;
-      background: #f9fafc;
+    /* ===== CHAT AREA ===== */
+    .chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+    .chat-messages{
+      flex:1;overflow-y:auto;padding:24px 28px;display:flex;flex-direction:column;gap:16px;
+      scroll-behavior:smooth;background:#f4f7fa;
     }
-    .chat-messages::-webkit-scrollbar { width: 5px; }
-    .chat-messages::-webkit-scrollbar-thumb { background: #c5cdd8; border-radius: 10px; }
+    .chat-messages::-webkit-scrollbar{width:5px}
+    .chat-messages::-webkit-scrollbar-thumb{background:#c5cdd8;border-radius:10px}
 
     /* ===== BUBBLES ===== */
-    .msg { max-width: 85%; animation: fadeUp .3s ease; }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
+    .msg{max-width:82%;animation:fadeUp .35s ease;width:fit-content}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .msg.bot{align-self:flex-start}
+    .msg.user{align-self:flex-end}
+    .msg .bubble{padding:14px 20px;border-radius:var(--radius);font-size:14px;line-height:1.65;word-wrap:break-word}
+    .msg.bot .bubble{
+      background:var(--card);color:var(--text);
+      border:1px solid var(--border);
+      border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);
+      border-bottom-right-radius:var(--radius);border-bottom-left-radius:4px;
+      box-shadow:0 2px 8px rgba(0,0,0,.04);
     }
-    .msg.bot { align-self: flex-start; }
-    .msg.user { align-self: flex-end; }
-
-    .msg .bubble {
-      padding: 12px 16px;
-      border-radius: 16px;
-      font-size: 14px;
-      line-height: 1.55;
-      word-wrap: break-word;
+    .msg.user .bubble{
+      background:var(--primary);color:#fff;
+      border-top-left-radius:var(--radius);border-top-right-radius:var(--radius);
+      border-bottom-left-radius:var(--radius);border-bottom-right-radius:4px;
+      box-shadow:0 2px 8px rgba(0,40,80,.15);
     }
-    .msg.bot .bubble {
-      background: #fff;
-      color: #1a1a2e;
-      border: 1px solid #e4e8ee;
-      border-bottom-left-radius: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,.04);
-    }
-    .msg.user .bubble {
-      background: linear-gradient(135deg, #003366, #005b99);
-      color: #fff;
-      border-bottom-right-radius: 4px;
-    }
-    .msg .bubble strong { color: #003366; }
-    .msg.user .bubble strong { color: #aad4ff; }
-
-    .msg .bubble ul, .msg .bubble ol {
-      margin: 6px 0 2px 18px;
-      font-size: 13.5px;
-    }
-    .msg .bubble li { margin-bottom: 4px; }
+    .msg .bubble strong{color:var(--primary)}
+    .msg.user .bubble strong{color:#aad4ff}
+    .msg .bubble ul,.msg .bubble ol{margin:6px 0 4px 18px;font-size:13.2px}
+    .msg .bubble li{margin-bottom:4px}
+    .msg .bubble a{color:var(--accent);text-decoration:none}
+    .msg .bubble a:hover{text-decoration:underline}
 
     /* ===== QUICK BUTTONS ===== */
-    .quick-buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 8px;
+    .quick-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .quick-btn{
+      background:#fff;color:var(--text);border:1.5px solid #c8d3de;
+      border-radius:22px;padding:8px 18px;font-size:13px;cursor:pointer;
+      transition:all .2s ease;font-family:inherit;white-space:nowrap;
+      font-weight:500;
     }
-    .quick-btn {
-      background: #eef3ff;
-      color: #003366;
-      border: 1px solid #c9d6f0;
-      border-radius: 20px;
-      padding: 7px 14px;
-      font-size: 12.5px;
-      cursor: pointer;
-      transition: all .2s;
-      font-family: inherit;
-    }
-    .quick-btn:hover {
-      background: #003366;
-      color: #fff;
-      border-color: #003366;
-    }
+    .quick-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(0,40,80,.15)}
 
     /* ===== INPUT BAR ===== */
-    .chat-input {
-      padding: 14px 16px;
-      border-top: 1px solid #e8ecf1;
-      display: flex;
-      gap: 10px;
-      background: #fff;
-      flex-shrink: 0;
+    .chat-input{
+      padding:18px 28px;border-top:1px solid var(--border);display:flex;gap:12px;
+      background:var(--card);flex-shrink:0;
+      border-radius:0 0 var(--radius-lg) var(--radius-lg);
     }
-    .chat-input input {
-      flex: 1;
-      border: 1.5px solid #dce1ea;
-      border-radius: 24px;
-      padding: 10px 18px;
-      font-size: 14px;
-      outline: none;
-      font-family: inherit;
-      transition: border-color .2s;
+    .chat-input input{
+      flex:1;border:1.5px solid var(--border);border-radius:26px;padding:13px 22px;
+      font-size:14.5px;outline:none;font-family:inherit;transition:border-color .2s;
+      background:#f8fafb;
     }
-    .chat-input input:focus { border-color: #005b99; }
-    .chat-input input::placeholder { color: #a0aab5; }
-
-    .chat-input button {
-      width: 42px; height: 42px;
-      border-radius: 50%;
-      border: none;
-      background: linear-gradient(135deg, #003366, #005b99);
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: transform .15s, box-shadow .2s;
-      flex-shrink: 0;
+    .chat-input input:focus{border-color:var(--accent);background:#fff}
+    .chat-input input::placeholder{color:#a0aab5}
+    .chat-input button{
+      width:48px;height:48px;border-radius:50%;border:none;
+      background:var(--primary);
+      color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;
+      justify-content:center;transition:transform .15s,box-shadow .2s;flex-shrink:0;
     }
-    .chat-input button:hover { transform: scale(1.08); box-shadow: 0 3px 10px rgba(0,51,102,.3); }
+    .chat-input button:hover{transform:scale(1.07);box-shadow:0 4px 16px rgba(0,51,102,.3)}
 
     /* ===== TYPING INDICATOR ===== */
-    .typing { display: flex; gap: 5px; padding: 8px 0; }
-    .typing span {
-      width: 8px; height: 8px;
-      background: #b0bec5;
-      border-radius: 50%;
-      animation: bounce 1.2s infinite;
-    }
-    .typing span:nth-child(2) { animation-delay: .2s; }
-    .typing span:nth-child(3) { animation-delay: .4s; }
-    @keyframes bounce {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-6px); }
-    }
-
-    /* ===== INLINE TABLES ===== */
-    .msg .bubble table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 6px 0;
-      font-size: 12.5px;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-    .msg .bubble table th {
-      background: #003366;
-      color: #fff;
-      padding: 6px 8px;
-      text-align: left;
-      font-weight: 600;
-    }
-    .msg .bubble table td {
-      padding: 5px 8px;
-      border-bottom: 1px solid #e8ecf1;
-    }
-    .msg .bubble table tr:nth-child(even) td {
-      background: #f5f8ff;
-    }
-    .msg .bubble table tr:last-child td {
-      border-bottom: none;
-    }
+    .typing{display:flex;gap:5px;padding:8px 0}
+    .typing span{width:8px;height:8px;background:#b0bec5;border-radius:50%;animation:bounce 1.2s infinite}
+    .typing span:nth-child(2){animation-delay:.2s}
+    .typing span:nth-child(3){animation-delay:.4s}
+    @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
 
     /* ===== STEP CARDS ===== */
-    .step-card {
-      background: #f0f5ff;
-      border-left: 3px solid #005b99;
-      border-radius: 8px;
-      padding: 10px 14px;
-      margin: 6px 0;
-      font-size: 13.5px;
+    .step-card{
+      background:#f0f5ff;border-left:3px solid var(--primary-light);
+      border-radius:8px;padding:10px 14px;margin:6px 0;font-size:13.2px;
     }
-    .step-card .step-num {
-      font-weight: 700;
-      color: #003366;
-      margin-right: 4px;
+    .step-card .step-num{font-weight:700;color:var(--primary);margin-right:4px}
+
+    /* ===== FLOW DIAGRAM ===== */
+    .flow-diagram{display:flex;flex-wrap:wrap;align-items:center;gap:4px;margin:10px 0;font-size:12.5px}
+    .flow-node{
+      background:#eef3fa;border:1px solid #b8cce8;border-radius:8px;
+      padding:6px 12px;font-weight:600;color:var(--primary);white-space:nowrap;
+    }
+    .flow-node.green{background:#e8f5e9;border-color:#a5d6a7;color:var(--green)}
+    .flow-node.orange{background:#fff3e0;border-color:#ffcc80;color:var(--orange)}
+    .flow-node.red{background:#fce4ec;border-color:#ef9a9a;color:var(--red)}
+    .flow-node.active-node{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .flow-arrow{font-size:16px;color:var(--text-light);flex-shrink:0}
+
+    /* ===== CHANNEL BADGES ===== */
+    .channel-badge{
+      display:inline-flex;align-items:center;gap:4px;padding:3px 10px;
+      border-radius:12px;font-size:11.5px;font-weight:600;
+    }
+    .channel-badge.green{background:#e8f5e9;color:var(--green);border:1px solid #a5d6a7}
+    .channel-badge.orange{background:#fff3e0;color:var(--orange);border:1px solid #ffcc80}
+    .channel-badge.red{background:#fce4ec;color:var(--red);border:1px solid #ef9a9a}
+
+    /* ===== TABLES ===== */
+    .msg .bubble table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12.5px;border-radius:8px;overflow:hidden}
+    .msg .bubble table th{background:var(--primary);color:#fff;padding:7px 10px;text-align:left;font-weight:600}
+    .msg .bubble table td{padding:6px 10px;border-bottom:1px solid var(--border)}
+    .msg .bubble table tr:nth-child(even) td{background:#f5f8ff}
+    .msg .bubble table tr:last-child td{border-bottom:none}
+
+    /* ===== INFO BOX ===== */
+    .info-box{
+      background:#fffce6;border:1px solid #ffe082;border-radius:8px;
+      padding:10px 14px;margin:8px 0;font-size:12.8px;
+    }
+    .info-box.blue{background:#e3f2fd;border-color:#90caf9}
+    .info-box.green-box{background:#e8f5e9;border-color:#a5d6a7}
+    .info-box.red-box{background:#fce4ec;border-color:#ef9a9a}
+
+    /* ===== SECTION TITLE (in bubble) ===== */
+    .section-title{
+      font-size:15px;font-weight:700;color:var(--primary);margin-bottom:8px;
+      display:flex;align-items:center;gap:8px;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:780px){
+      .app{width:95%;height:95vh}
+    }
+    @media(max-width:600px){
+      .app{width:100%;height:100vh;border-radius:0}
+      .topbar{border-radius:0}
+      .chat-input{border-radius:0;padding:12px 14px}
+      .chat-messages{padding:16px 14px}
+      .msg{max-width:92%}
+      .topbar .subtitle{display:none}
     }
   </style>
 </head>
 <body>
 
-<div class="chat-container">
-  <!-- HEADER -->
-  <div class="chat-header">
-    <div class="avatar">🤖</div>
-    <div class="info">
-      <h2>ROW Application Assistant</h2>
-      <p>Ask me anything about the ROW Application</p>
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="bot-avatar">🤖</div>
+    <div class="title-group">
+      <span class="title">ROW Application Assistant</span>
+      <span class="subtitle">Ask me anything about the ROW Application</span>
     </div>
   </div>
 
-  <!-- MESSAGES -->
-  <div class="chat-messages" id="chatMessages"></div>
-
-  <!-- INPUT -->
-  <div class="chat-input">
-    <input type="text" id="userInput" placeholder="Type your question..." autocomplete="off" />
-    <button id="sendBtn" title="Send">&#10148;</button>
+  <!-- CHAT -->
+  <div class="chat-area">
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input">
+      <input type="text" id="userInput" placeholder="Type your question..." autocomplete="off" />
+      <button id="sendBtn" title="Send">&#10148;</button>
+    </div>
   </div>
 </div>
 
 <script>
-// ============================
-// KNOWLEDGE BASE
-// ============================
+// ============================================================
+// KNOWLEDGE BASE – Comprehensive ROW Process Data
+// ============================================================
 const KB = [
+  // ---- WELCOME / MAIN MENU ----
   {
-    keywords: ["hello","hi","hey","help","start","menu","what can you do","assist"],
-    answer: `Hi there! 👋 I'm your <strong>ROW Application Assistant</strong>. I can help you with:
-<ul>
-  <li>Creating a ROW Application</li>
-  <li><strong>Roles & Tasks</strong> – Who does what (ROW Executive, SCO, State FC&A)</li>
-  <li><strong>Task Locations</strong> – SHQ / NHQ details</li>
-  <li>Searching for Span / Pole / Crossing details</li>
-  <li>Splitting spans & updating authority</li>
-  <li>Merging applications</li>
-  <li>Application acknowledgement & submission</li>
-  <li>Joint survey details</li>
-  <li>Application processing fee & approvals</li>
-</ul>
-What would you like to know?`,
-    quickButtons: ["Create Application", "Roles & Tasks", "Search Span", "Split Span", "Merge Application", "Submit Application", "Joint Survey", "Processing Fee"]
+    id:"welcome",
+    keywords:["hello","hi","hey","help","start","menu","what can you do","assist","home","main menu","welcome"],
+    answer:`<div class="section-title">👋 Welcome to the ROW Process Assistant</div>
+I can help field users with the <strong>complete Right of Way (ROW)</strong> process. Here's what I cover:
+<br><br>
+<table>
+<tr><th>Category</th><th>Topics</th></tr>
+<tr><td>🏛️ Authority</td><td>Authority Creation, Rate Update & Approval</td></tr>
+<tr><td>📝 Application</td><td>Creation, Processing Fee, Acknowledgement, Joint Survey</td></tr>
+<tr><td>📄 Demand Note</td><td>New DN, Supplementary DN, Channels, Approval & Payment</td></tr>
+<tr><td>👥 Roles</td><td>ROW Executive, SCO, State FC&A, State ROW Lead, Sponsor & more</td></tr>
+<tr><td>🗺️ GIS</td><td>Span Search, Split, Merge, Authority Update on Map</td></tr>
+</table>
+<br>Choose a topic below or type your question!`,
+    quickButtons:["Authority Creation","Rate Update","Create Application","Demand Note","DN Channels","Roles & Tasks","GIS Map","Glossary"]
   },
-  {
-    keywords: ["access","login","open","navigate","home","k2","fttx","get started","where to start","how to start"],
-    answer: `To <strong>access the ROW Application</strong>:
-<div class="step-card"><span class="step-num">Step 1:</span> Log in to the <strong>K2 platform</strong> and go to the <strong>FTTX Home</strong> screen.</div>
-<div class="step-card"><span class="step-num">Step 2:</span> Find the <strong>PUBLIC ROW</strong> tile on the left side.</div>
-<div class="step-card"><span class="step-num">Step 3:</span> Click <strong>"Manage Draft Application (Intercity & Intracity)"</strong> to start.</div>
-💡 <em>The FTTX Home URL is: https://ospreplica.jio.com/Runtime/Runtime/Form/FTTX__HOME/</em>`,
-    quickButtons: ["Search Span", "Create Application"]
-  },
-  {
-    keywords: ["create","new","generate","application","create row","create application","how to create","draft"],
-    answer: `To <strong>create a new ROW Application</strong>:
-<div class="step-card"><span class="step-num">Step 1:</span> Go to <strong>"Manage Draft Application"</strong> from the PUBLIC ROW tile.</div>
-<div class="step-card"><span class="step-num">Step 2:</span> Select <strong>"NON DIT Draft Application"</strong>.</div>
-<div class="step-card"><span class="step-num">Step 3:</span> Fill in search filters (Jio State, Political State, MP, Authority Category, Authority, Network Type).</div>
-<div class="step-card"><span class="step-num">Step 4:</span> Click <strong>"Search"</strong>, then select a Link/Route.</div>
-<div class="step-card"><span class="step-num">Step 5:</span> Click <strong>"Get Span"</strong> to load span details.</div>
-<div class="step-card"><span class="step-num">Step 6:</span> Select the span(s) using the checkboxes.</div>
-<div class="step-card"><span class="step-num">Step 7:</span> Click <strong>"Generate Application"</strong>.</div>
-✅ A success message will show your Application Reference Number.`,
-    quickButtons: ["Search Span", "Split Span", "Merge Application"]
-  },
-  {
-    keywords: ["search","span","pole","crossing","link","route","find","get span","get pole","get crossing","filter","details"],
-    answer: `To <strong>search for Span, Pole, or Crossing details</strong>:
-<div class="step-card"><span class="step-num">Step 1:</span> On the Application Generation screen, fill in these filters:</div>
-<ul>
-  <li><strong>Phase</strong> – Select applicable phase</li>
-  <li><strong>Jio State</strong> – e.g., Chhattisgarh</li>
-  <li><strong>Political State</strong> – e.g., Chhattisgarh</li>
-  <li><strong>MP</strong> – e.g., INCGJGDP01 - Jagdalpur</li>
-  <li><strong>Authority Category</strong> – e.g., NHAI</li>
-  <li><strong>Authority</strong> – e.g., CG NHAI</li>
-  <li><strong>Network Type</strong> – e.g., INTERCITY</li>
-</ul>
-<div class="step-card"><span class="step-num">Step 2:</span> Click <strong>"Search"</strong>.</div>
-<div class="step-card"><span class="step-num">Step 3:</span> Select the Link/Route from the dropdown.</div>
-<div class="step-card"><span class="step-num">Step 4:</span> Click <strong>"Get Span"</strong>, <strong>"Get Pole"</strong>, or <strong>"Get Crossing"</strong> as needed.</div>
-📋 Results show Feature ID, Length, UOM, Construction Type & Methodology.`,
-    quickButtons: ["Create Application", "Split Span"]
-  },
-  {
-    keywords: ["split","span split","split span","start split","save split","how to split"],
-    answer: `To <strong>split a span</strong> on the GIS Map:
-<div class="step-card"><span class="step-num">Step 1:</span> Go to the <strong>Update Authority from GIS Page</strong>.</div>
-<div class="step-card"><span class="step-num">Step 2:</span> Fill in filters: Jio State, State, Maintenance Point, Network Type, Link Id, Span Id, Feature Type.</div>
-<div class="step-card"><span class="step-num">Step 3:</span> Click <strong>"Submit"</strong> to load the span on the GIS map.</div>
-<div class="step-card"><span class="step-num">Step 4:</span> Click <strong>"Start Split"</strong> and click on the map to mark the split point.</div>
-<div class="step-card"><span class="step-num">Step 5:</span> Click <strong>"Save Split"</strong> to save.</div>
-✅ Success: <em>"Split span data saved successfully."</em>
 
-Other actions available: <strong>Merge Span, Stop Split, Reset Split, ReSplit</strong>.`,
-    quickButtons: ["Update Authority", "Create Application", "Merge Application"]
-  },
+  // ---- PROCESS OVERVIEW ----
   {
-    keywords: ["authority","update authority","add authority","manage authority","new authority","save authority","nhai","pwd"],
-    answer: `To <strong>manage or update authority</strong>:
-<div class="step-card"><span class="step-num">Step 1:</span> Navigate to <strong>Authority Details</strong> page in Infra Build.</div>
-<div class="step-card"><span class="step-num">Step 2:</span> To add a new authority, select Authority Type: <strong>"New"</strong>.</div>
-<div class="step-card"><span class="step-num">Step 3:</span> Fill in: Authority Category (e.g., PWD), Authority Name (e.g., CG PWD), Authority Address.</div>
-<div class="step-card"><span class="step-num">Step 4:</span> Set up <strong>JIO State Mapping</strong> (Circle &amp; MP Name).</div>
-<div class="step-card"><span class="step-num">Step 5:</span> Click <strong>"Save Authority"</strong> → Confirm → ✅ <em>"Authority Saved Successfully."</em></div>
-To update authority for spans, select the span in the GIS page, choose the Authority Category & Name, and click <strong>"Update"</strong>.`,
-    quickButtons: ["Split Span", "Create Application"]
+    id:"overview",
+    keywords:["overview","process","flow","lifecycle","steps","what is row","about","how does row work","end to end","complete flow","full process"],
+    answer:`<div class="section-title">📋 ROW Application – End-to-End Process Flow</div>
+The Right of Way process follows these major stages:
+<br><br>
+<div class="flow-diagram">
+  <span class="flow-node active-node">Authority Creation</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Rate Update</span><span class="flow-arrow">→</span>
+  <span class="flow-node">App Creation</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Processing Fee</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Acknowledgement</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Joint Survey</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Demand Note</span><span class="flow-arrow">→</span>
+  <span class="flow-node">DN Approval</span><span class="flow-arrow">→</span>
+  <span class="flow-node">DN Payment</span>
+</div>
+<br>
+<strong>1. Authority Creation</strong> – Create/configure ROW authorities (NHAI, PWD, etc.)<br>
+<strong>2. Rate Update</strong> – Configure methodology-wise per-meter rates → Approval by NHQ FC&A<br>
+<strong>3. Application Creation</strong> – Draft application (DIT/NON-DIT) → Generate Application Number<br>
+<strong>4. Processing Fee</strong> – Capture fee → L1 (SCO) → L2 (State FC&A) Approval<br>
+<strong>5. YEXP Number</strong> – Auto or Manual YEXP from SAP<br>
+<strong>6. Acknowledgement</strong> – Submit acknowledged application documents<br>
+<strong>7. Joint Survey</strong> – Capture survey findings<br>
+<strong>8. Demand Note</strong> – Create New or Supplementary DN (Full / Partial / No DN)<br>
+<strong>9. DN Approval</strong> – Channel-based: 🟢 Green (3L) | 🟠 Orange (4L) | 🔴 Red (5L)<br>
+<strong>10. DN Payment</strong> – Payment instrument creation, execution & permission documents<br>
+<br>
+<div class="info-box blue">💡 <strong>Systems Used:</strong> K2 P2B (Workflow) + GIS (Mapping) + SAP Finance & Control</div>`,
+    quickButtons:["Authority Creation","Create Application","Demand Note","DN Channels","Roles & Tasks"]
   },
+
+  // ---- AUTHORITY CREATION ----
   {
-    keywords: ["merge","merge application","combine","onefiber","generate merged","multiple application"],
-    answer: `To <strong>merge multiple applications</strong>:
-<div class="step-card"><span class="step-num">Step 1:</span> On FTTX Home, click <strong>"Manage Application OneFiber"</strong> under PUBLIC ROW.</div>
-<div class="step-card"><span class="step-num">Step 2:</span> Select <strong>Network Type</strong> (e.g., INTERCITY).</div>
-<div class="step-card"><span class="step-num">Step 3:</span> Fill in search filters and click <strong>"Search"</strong>.</div>
-<div class="step-card"><span class="step-num">Step 4:</span> Select the draft applications to merge using checkboxes.</div>
-<div class="step-card"><span class="step-num">Step 5:</span> Review: App Length, Pole Count, Crossing Count, ROW Processing Fee Applicable (Yes/No).</div>
-<div class="step-card"><span class="step-num">Step 6:</span> Click <strong>"Generate Merged Application"</strong>.</div>
-✅ Success: <em>"Merge Application generated successfully."</em>`,
-    quickButtons: ["Submit Application", "Joint Survey"]
+    id:"authority_creation",
+    keywords:["authority creation","create authority","new authority","add authority","authority setup","authority type","primary","secondary","authority details","row authority creation","manage authority","save authority","nhai","pwd","authority category"],
+    answer:`<div class="section-title">🏛️ ROW Authority Creation</div>
+Authority creation sets up the governing bodies (like NHAI, PWD) under which ROW applications are filed.
+<br><br>
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Select Filters</strong> – Choose City, JC (Jio Circle), JP (Jio Point), and Authority Type (<strong>Primary</strong> or <strong>Secondary</strong>).</div>
+<div class="step-card"><span class="step-num">Step 2:</span> <strong>Add ROW Authority Details</strong> – Fill in Authority Category (e.g., NHAI, PWD), Authority Name (e.g., CG NHAI), Authority Address.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Set up <strong>Jio State Mapping</strong> – Map Circle & Maintenance Point (MP) Name.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Click <strong>"Save Authority"</strong> → Confirm → ✅ <em>"Authority Saved Successfully."</em></div>
+<br>
+<div class="info-box blue">
+<strong>Authority Types:</strong><br>
+• <strong>Primary</strong> – Main authority for the region<br>
+• <strong>Secondary</strong> – Additional/supporting authority
+</div>
+`,
+    quickButtons:["Rate Update","Create Application","Roles & Tasks","Main Menu"]
   },
+
+  // ---- RATE UPDATE ----
   {
-    keywords: ["submit","acknowledge","acknowledgement","submission","submit application","task list"],
-    answer: `To <strong>submit an application acknowledgement</strong>:
-<div class="step-card"><span class="step-num">Step 1:</span> Go to <strong>Task List</strong> (FTTXTaskList).</div>
-<div class="step-card"><span class="step-num">Step 2:</span> Find and click <strong>"Submit App Acknowledgement Details"</strong> task under ROW - Application.</div>
-<div class="step-card"><span class="step-num">Step 3:</span> Review application details (App Ref No, Authority, Length, Poles, Crossings).</div>
-<div class="step-card"><span class="step-num">Step 4:</span> Upload the <strong>acknowledged copy</strong> of the submitted application (PDF).</div>
-<div class="step-card"><span class="step-num">Step 5:</span> Attach any <strong>other documents</strong> if needed.</div>
-<div class="step-card"><span class="step-num">Step 6:</span> Enter Processing Fee, Payment Type & Payment Instrument No. if applicable.</div>
-<div class="step-card"><span class="step-num">Step 7:</span> Click <strong>"Submit"</strong>.</div>
-✅ Success: <em>"Application submitted."</em>`,
-    quickButtons: ["Joint Survey", "Processing Fee"]
+    id:"rate_update",
+    keywords:["rate","rate update","row rate","rate configuration","methodology mapping","authority methodology","rate parameters","fixed charges","recurring charges","variance","escalation","discount","rate approval","approve rate","rate config","per meter rate","construction methodology","rate for route"],
+    answer:`<div class="section-title">💰 ROW Rate Update – Authority Methodology Mapping</div>
+Rate Update configures per-meter rates for each authority based on construction methodology.
+<br><br>
+<strong>⚙️ Configuration Steps:</strong>
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Select City & Construction Methodology</strong> – Choose the region and methodology (e.g., UG, HDD, CROSSING).</div>
+<div class="step-card"><span class="step-num">Step 2:</span> <strong>Update Methodology-wise Per Meter Rate for Route</strong> – Configure rate parameters:</div>
+<ul>
+  <li><strong>Circle</strong> – Region (e.g., West Bengal)</li>
+  <li><strong>Methodology</strong> – e.g., CROSSING, UG, HDD</li>
+  <li><strong>Construction Type</strong> – e.g., CROSSING, HDD</li>
+  <li><strong>Ownership</strong> – e.g., OWN</li>
+  <li><strong>Fixed Charges per Crossing (₹)</strong> – e.g., 10.00</li>
+  <li><strong>Fixed Charges Higher Variance (%)</strong> – e.g., 2.00</li>
+  <li><strong>Fixed Charges Lower Variance (%)</strong> – e.g., -2.00</li>
+  <li><strong>Recurring Charges (₹)</strong> – e.g., 5.00</li>
+  <li><strong>Recurring Charges Escalation (%)</strong> – e.g., 1.00</li>
+  <li><strong>Discount (%)</strong> – e.g., 0.00</li>
+</ul>
+<div class="step-card"><span class="step-num">Step 3:</span> <strong>Approve Rate</strong> – Submit for approval to NHQ FC&A.</div>
+<br>
+<strong>✅ Approval Flow:</strong>
+<div class="flow-diagram">
+  <span class="flow-node">State FC&A Lead<br><small>Configure Rates</small></span><span class="flow-arrow">→</span>
+  <span class="flow-node active-node">NHQ FC&A<br><small>Approve Rates</small></span><span class="flow-arrow">→</span>
+  <span class="flow-node green">✅ Approved</span>
+</div>
+<div class="info-box">💡 Status changes from <strong>Pending → Approved</strong> once NHQ FC&A approves the rate configuration.</div>`,
+    quickButtons:["Authority Creation","Create Application","Processing Fee","Main Menu"]
   },
+
+  // ---- APPLICATION CREATION ----
   {
-    keywords: ["joint survey","survey","survey finding","survey document","submit joint"],
-    answer: `To <strong>capture Joint Survey details</strong>:
-<div class="step-card"><span class="step-num">Step 1:</span> Go to <strong>Task List</strong> and find <strong>"Submit Joint Survey Findings"</strong> task.</div>
+    id:"app_creation",
+    keywords:["create","new","generate","application","create row","create application","how to create","draft","initiate","dit","non dit","non-dit","application creation","scope released","generate application number","link","span segment","draft application"],
+    answer:`<div class="section-title">📝 ROW Application Creation & Processing</div>
+This is the core workflow for creating ROW applications. It covers the full lifecycle from scope release to DN creation trigger.
+<br><br>
+<strong>📌 Application Creation Steps:</strong>
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Receive Notification</strong> – Scope Released for Construction notification triggers the process.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> <strong>Initiate Draft Application</strong> – Choose <strong>DIT</strong> or <strong>NON-DIT</strong> application type.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> <strong>Get Eligible Segments</strong> – Fetch Link/SPAN segments mapped to the Authority.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> <strong>Generate Draft Application Number</strong> – Select partial or total SPANs of the link.</div>
+<div class="step-card"><span class="step-num">Step 5:</span> <strong>Generate Application Number</strong> – System checks if Application Processing Fee is required.</div>
+<br>
+<div class="info-box blue">
+<strong>Application Types:</strong><br>
+• <strong>DIT</strong> – Department of Information Technology governed applications<br>
+• <strong>NON-DIT</strong> – Non-DIT applications (standard ROW)
+</div>
+<br>
+<strong>📌 After Application Generation:</strong>
+<div class="step-card"><span class="step-num">Step 6:</span> If processing fee applicable → <strong>Capture Processing Fee</strong> → Approval flow</div>
+<div class="step-card"><span class="step-num">Step 7:</span> <strong>YEXP Number</strong> – Auto from SAP or Manual entry</div>
+<div class="step-card"><span class="step-num">Step 8:</span> <strong>Submit Payment Doc Status</strong></div>
+<div class="step-card"><span class="step-num">Step 9:</span> <strong>Verbal Permission</strong> – Update flag & upload documents (if available)</div>
+<div class="step-card"><span class="step-num">Step 10:</span> <strong>Submit Application Acknowledgement</strong></div>
+<div class="step-card"><span class="step-num">Step 11:</span> <strong>Submit Joint Survey Findings</strong></div>
+<div class="step-card"><span class="step-num">Step 12:</span> <strong>Trigger DN Creation Workflow</strong></div>
+<br>
+<div class="flow-diagram">
+  <span class="flow-node active-node">Scope Released</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Draft App</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Gen App No.</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Processing Fee</span><span class="flow-arrow">→</span>
+  <span class="flow-node">YEXP</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Acknowledge</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Joint Survey</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Trigger DN</span>
+</div>`,
+    quickButtons:["Processing Fee","YEXP Number","Acknowledgement","Joint Survey","Demand Note","Roles & Tasks"]
+  },
+
+  // ---- PROCESSING FEE ----
+  {
+    id:"processing_fee",
+    keywords:["processing fee","fee","payment","approval","l1","l2","sco","fc&a","fca","capture fee","application processing fee","approve fee","reject fee","rework fee","fee approval"],
+    answer:`<div class="section-title">💳 Application Processing Fee & Approval</div>
+When an application requires a processing fee, the following flow is triggered:
+<br><br>
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>ROW Executive</strong> captures the application processing fee details.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Fee goes for <strong>L1 Approval</strong> → reviewed by <strong>SCO</strong>.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> <strong>L1 Decision:</strong>
+  <ul>
+    <li>✅ <strong>Approved</strong> → Moves to L2</li>
+    <li>❌ <strong>Rejected</strong> → Rework on Processing Fee (goes back to ROW Executive)</li>
+  </ul>
+</div>
+<div class="step-card"><span class="step-num">Step 4:</span> <strong>L2 Approval</strong> → reviewed by <strong>State FC&A</strong>.</div>
+<div class="step-card"><span class="step-num">Step 5:</span> <strong>L2 Decision:</strong>
+  <ul>
+    <li>✅ <strong>Approved</strong> → Approval notification sent to ROW Executive</li>
+    <li>❌ <strong>Rejected</strong> → Rework on Processing Fee</li>
+  </ul>
+</div>
+<br>
+<strong>✅ Approval Flow:</strong>
+<div class="flow-diagram">
+  <span class="flow-node">ROW Executive<br><small>Capture Fee</small></span><span class="flow-arrow">→</span>
+  <span class="flow-node">SCO<br><small>L1 Approval</small></span><span class="flow-arrow">→</span>
+  <span class="flow-node">State FC&A<br><small>L2 Approval</small></span><span class="flow-arrow">→</span>
+  <span class="flow-node green">✅ Approved</span>
+</div>
+<div class="flow-diagram" style="margin-top:4px">
+  <span class="flow-arrow" style="visibility:hidden">→</span>
+  <span class="flow-node red">❌ Rejected</span><span class="flow-arrow">→</span>
+  <span class="flow-node">ROW Executive<br><small>Rework Fee</small></span>
+</div>
+`,
+    quickButtons:["YEXP Number","Create Application","Demand Note","Main Menu"]
+  },
+
+  // ---- YEXP NUMBER ----
+  {
+    id:"yexp",
+    keywords:["yexp","yexp number","sap","finance","auto yexp","manual yexp","generate yexp","enter yexp","financial system"],
+    answer:`<div class="section-title">🔢 YEXP Number – SAP Finance Integration</div>
+After L2 approval of processing fee, the YEXP number is handled:
+<br><br>
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Receive L2 Approval Notification</strong> – ROW Executive gets notified.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> System checks: <strong>Auto or Manual YEXP creation?</strong></div>
+<br>
+<div class="info-box blue">
+<strong>Auto YEXP:</strong> If auto-generated, system fetches YEXP number directly from <strong>SAP Finance & Control</strong>.<br><br>
+<strong>Manual YEXP:</strong> If manual, ROW Executive creates YEXP in SAP and then enters the number in K2.
+</div>
+<br>
+<div class="step-card"><span class="step-num">Step 3:</span> <strong>Submit Application Payment Doc Status</strong> – After YEXP is captured.</div>
+<br>
+<div class="flow-diagram">
+  <span class="flow-node active-node">L2 Approved</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Check YEXP Type</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Auto: SAP generates</span>
+</div>
+<div class="flow-diagram" style="margin-top:4px">
+  <span class="flow-arrow" style="visibility:hidden">→</span>
+  <span class="flow-arrow" style="visibility:hidden">→</span>
+  <span class="flow-arrow">→</span>
+  <span class="flow-node">Manual: Create & Enter</span>
+</div>
+`,
+    quickButtons:["Processing Fee","Acknowledgement","Create Application","Main Menu"]
+  },
+
+  // ---- ACKNOWLEDGEMENT ----
+  {
+    id:"acknowledgement",
+    keywords:["submit","acknowledge","acknowledgement","submission","submit application","task list","upload","acknowledged copy","verbal","verbal permission","permission documents"],
+    answer:`<div class="section-title">📤 Application Acknowledgement & Verbal Permission</div>
+After application generation and fee processing, the ROW Executive submits acknowledgement.
+<br><br>
+<strong>📌 Verbal Permission (if available):</strong>
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Update Verbal ROW Permission Availability Flag</strong> – Mark if verbal permission exists.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> <strong>Upload Verbal Permission Documents</strong> – Attach any verbal permission docs.</div>
+<br>
+<strong>📌 Application Acknowledgement:</strong>
+<div class="step-card"><span class="step-num">Step 3:</span> Go to <strong>Task List</strong> → Find <strong>"Submit App Acknowledgement Details"</strong>.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Review application details (App Ref No, Authority, Length, Poles, Crossings).</div>
+<div class="step-card"><span class="step-num">Step 5:</span> Upload the <strong>acknowledged copy</strong> of the submitted application (PDF).</div>
+<div class="step-card"><span class="step-num">Step 6:</span> Attach any <strong>other documents</strong> if needed.</div>
+<div class="step-card"><span class="step-num">Step 7:</span> Click <strong>"Submit"</strong> → ✅ <em>"Application Acknowledgement Submitted."</em></div>
+`,
+    quickButtons:["Joint Survey","Processing Fee","Demand Note","Main Menu"]
+  },
+
+  // ---- JOINT SURVEY ----
+  {
+    id:"joint_survey",
+    keywords:["joint survey","survey","survey finding","survey document","submit joint","date of survey","survey date","capture survey"],
+    answer:`<div class="section-title">🔍 Joint Survey Findings</div>
+After acknowledgement, the ROW Executive captures the joint survey details.
+<br><br>
+<div class="step-card"><span class="step-num">Step 1:</span> Go to <strong>Task List</strong> → Find <strong>"Submit Joint Survey Findings"</strong>.</div>
 <div class="step-card"><span class="step-num">Step 2:</span> Open the <strong>Joint Survey Findings</strong> form.</div>
 <div class="step-card"><span class="step-num">Step 3:</span> Review details: App Ref No, Authority Name, App Length, Crossings, Poles.</div>
 <div class="step-card"><span class="step-num">Step 4:</span> Enter the <strong>Date of Joint Survey</strong>.</div>
 <div class="step-card"><span class="step-num">Step 5:</span> Upload the <strong>Survey Finding Document</strong> (e.g., Certificate PDF).</div>
-<div class="step-card"><span class="step-num">Step 6:</span> Add <strong>Comments</strong> (e.g., "Joint survey done").</div>
-<div class="step-card"><span class="step-num">Step 7:</span> Click <strong>"Submit"</strong>. (Or click "Not Applicable" if survey is not required.)</div>
-✅ Success: <em>"Joint Survey Findings Submitted."</em>`,
-    quickButtons: ["Processing Fee", "Submit Application"]
+<div class="step-card"><span class="step-num">Step 6:</span> Add <strong>Comments</strong> (e.g., "Joint survey completed").</div>
+<div class="step-card"><span class="step-num">Step 7:</span> Click <strong>"Submit"</strong>. ✅ <em>"Joint Survey Findings Submitted."</em></div>
+<br>
+<div class="info-box">💡 If survey is not required, click <strong>"Not Applicable"</strong> to skip this step.</div>
+<br>
+After Joint Survey, the system <strong>Triggers DN Creation Workflow</strong> automatically.`,
+    quickButtons:["Demand Note","DN Channels","Acknowledgement","Main Menu"]
   },
-  {
-    keywords: ["processing fee","fee","payment","approval","l1","l2","sco","fc&a","fca","capture fee"],
-    answer: `<strong>Application Processing Fee</strong> involves a multi-level approval:
-<div class="step-card"><span class="step-num">Step 1:</span> <strong>ROW Executive</strong> captures the processing fee details.</div>
-<div class="step-card"><span class="step-num">Step 2:</span> Fee goes for <strong>L1 Approval</strong> → reviewed by <strong>SCO</strong> (State Circle Office).</div>
-<div class="step-card"><span class="step-num">Step 3:</span> After L1, fee goes for <strong>L2 Approval</strong> → approved by <strong>State FC&A</strong> (Finance, Costing & Accounts).</div>
-✅ Once both levels approve, the processing fee is finalized.
 
-📋 <strong>Approval Flow:</strong> ROW Executive → SCO (L1) → State FC&A (L2)`,
-    quickButtons: ["Create Application", "Submit Application", "Main Menu"]
-  },
+  // ---- DEMAND NOTE OVERVIEW ----
   {
-    keywords: ["workflow","process","flow","lifecycle","steps","overview","what is row","about"],
-    answer: `<strong>ROW Application Lifecycle:</strong>
-<ol>
-  <li><strong>Access</strong> – Log in to K2 → FTTX Home → PUBLIC ROW tile</li>
-  <li><strong>Search</strong> – Find SPAN/POLE/CROSSING details using filters</li>
-  <li><strong>Create</strong> – Select spans → Generate Application</li>
-  <li><strong>Split/Update</strong> – Split spans on GIS map → Update authority</li>
-  <li><strong>Merge</strong> – Combine multiple draft applications into one</li>
-  <li><strong>Acknowledge</strong> – Submit acknowledgement with documents</li>
-  <li><strong>Joint Survey</strong> – Capture survey findings</li>
-  <li><strong>Processing Fee</strong> – Capture fee → L1 (SCO) → L2 (State FC&A) approval</li>
-</ol>
-The application runs on <strong>K2 (workflow)</strong> and <strong>GIS (mapping)</strong> systems as a web application.`,
-    quickButtons: ["Create Application", "Merge Application", "Processing Fee"]
-  },
-  {
-    keywords: ["gis","map","geographic","gis map","route","fiber","network","layer filter"],
-    answer: `The <strong>GIS Map</strong> is used for geographic span management:
-<ul>
-  <li>Displays fiber routes with <strong>color-coded spans</strong></li>
-  <li>Shows span details: RWS Id, Length, Authority Category & Name</li>
-  <li>Allows <strong>span splitting</strong> by clicking on the map</li>
-  <li>Supports <strong>Start Split, Merge Span, Stop Split, Reset Split, ReSplit</strong></li>
-  <li>Includes ROW and Layer Filter tabs for filtering data</li>
-</ul>
-Access it via: <strong>Update ROW Authority (GIS)</strong> from the Authority Details page.`,
-    quickButtons: ["Split Span", "Update Authority"]
-  },
-  {
-    keywords: ["role","who","executive","user","permission","task","assign","responsible","roles and tasks"],
-    answer: `<strong>📋 Complete Task & Role Mapping:</strong>
+    id:"dn_overview",
+    keywords:["demand note","dn","dn creation","dn overview","what is demand note","dn types","dn type","full dn","partial dn","no dn","new dn","supplementary dn","create dn"],
+    answer:`<div class="section-title">📄 Demand Note (DN) – Overview</div>
+A Demand Note is the financial instrument raised against an ROW application for authority charges.
 <br><br>
-<table style="width:100%;border-collapse:collapse;font-size:12.5px;">
-<tr style="background:#003366;color:#fff;"><th style="padding:6px;border:1px solid #ccc;">Task</th><th style="padding:6px;border:1px solid #ccc;">Role</th><th style="padding:6px;border:1px solid #ccc;">System</th><th style="padding:6px;border:1px solid #ccc;">Location</th></tr>
-<tr><td style="padding:5px;border:1px solid #ddd;">Create ROW Application</td><td style="padding:5px;border:1px solid #ddd;"><strong>ROW Executive</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
-<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Application Acknowledgement</td><td style="padding:5px;border:1px solid #ddd;"><strong>ROW Executive</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
-<tr><td style="padding:5px;border:1px solid #ddd;">Capture Joint Survey Details</td><td style="padding:5px;border:1px solid #ddd;"><strong>ROW Executive</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
-<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Capture Application Processing Fee</td><td style="padding:5px;border:1px solid #ddd;"><strong>ROW Executive</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
-<tr><td style="padding:5px;border:1px solid #ddd;">Processing Fee – Approval L1</td><td style="padding:5px;border:1px solid #ddd;"><strong>SCO</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
-<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Processing Fee – Approval L2</td><td style="padding:5px;border:1px solid #ddd;"><strong>State FC&A</strong></td><td style="padding:5px;border:1px solid #ddd;">K2, GIS</td><td style="padding:5px;border:1px solid #ddd;">SHQ</td></tr>
+<strong>📌 DN Creation Types:</strong>
+<table>
+<tr><th>DN Type</th><th>Description</th></tr>
+<tr><td><strong>🆕 New DN</strong></td><td>Fresh DN created on an application for the first time</td></tr>
+<tr><td><strong>📑 Supplementary DN</strong></td><td>Additional DN created on a previously raised DN (same application number)</td></tr>
 </table>
-<br>All tasks are <strong>Web-based</strong> and performed on <strong>K2 & GIS</strong> systems.`,
-    quickButtons: ["ROW Executive Tasks", "SCO Tasks", "State FC&A Tasks", "Location Info", "Main Menu"]
-  },
-  {
-    keywords: ["row executive","row executive tasks","what does row executive do","executive role","executive tasks","executive responsibility"],
-    answer: `<strong>👤 ROW Executive – Tasks & Responsibilities:</strong>
-<br><br>The ROW Executive (located at <strong>SHQ</strong>) performs the following tasks on <strong>K2 & GIS</strong> (Web):
-<br><br>
-<div class="step-card"><span class="step-num">1.</span> <strong>Create ROW Application</strong> – Search spans, select segments, generate applications</div>
-<div class="step-card"><span class="step-num">2.</span> <strong>Application Acknowledgement</strong> – Submit acknowledgement with documents after application generation</div>
-<div class="step-card"><span class="step-num">3.</span> <strong>Capture Joint Survey Details</strong> – Enter survey date, upload survey findings document, add comments</div>
-<div class="step-card"><span class="step-num">4.</span> <strong>Capture Application Processing Fee</strong> – Enter processing fee details and initiate approval</div>
-<br>📍 <strong>Location:</strong> SHQ (State Headquarters)<br>
-💻 <strong>System:</strong> K2 (Workflow) + GIS (Mapping) | <strong>App Type:</strong> Web`,
-    quickButtons: ["Create Application", "Submit Application", "Joint Survey", "Processing Fee"]
-  },
-  {
-    keywords: ["sco tasks","sco role","state circle","sco approval","sco responsibility","what does sco do","sco do"],
-    answer: `<strong>👤 SCO (State Circle Office) – Tasks & Responsibilities:</strong>
-<br><br>
-<div class="step-card"><span class="step-num">Task:</span> <strong>Capture Application Processing Fee – Approval L1</strong></div>
-<ul>
-  <li>SCO reviews the processing fee submitted by the ROW Executive</li>
-  <li>Provides <strong>Level 1 (L1) Approval</strong> for the processing fee</li>
-  <li>After SCO approves, the fee moves to State FC&A for L2 approval</li>
-</ul>
-📍 <strong>Location:</strong> SHQ (State Headquarters)<br>
-💻 <strong>System:</strong> K2, GIS | <strong>App Type:</strong> Web
-<br><br>📋 <strong>Approval Flow:</strong> ROW Executive → <strong>SCO (L1)</strong> → State FC&A (L2)`,
-    quickButtons: ["State FC&A Tasks", "Processing Fee", "ROW Executive Tasks"]
-  },
-  {
-    keywords: ["state fc&a","fc&a tasks","fca tasks","fca role","finance","costing","accounts","fc&a approval","fc&a responsibility","what does fc&a do","state fca","l2 approval"],
-    answer: `<strong>👤 State FC&A (Finance, Costing & Accounts) – Tasks & Responsibilities:</strong>
-<br><br>
-<div class="step-card"><span class="step-num">Task:</span> <strong>Capture Application Processing Fee – Approval L2</strong></div>
-<ul>
-  <li>State FC&A reviews the processing fee after SCO's L1 approval</li>
-  <li>Provides <strong>Level 2 (L2) Final Approval</strong> for the processing fee</li>
-  <li>Once approved, the processing fee is <strong>finalized</strong></li>
-</ul>
-📍 <strong>Location:</strong> SHQ (State Headquarters)<br>
-💻 <strong>System:</strong> K2, GIS | <strong>App Type:</strong> Web
-<br><br>📋 <strong>Approval Flow:</strong> ROW Executive → SCO (L1) → <strong>State FC&A (L2)</strong> ✅`,
-    quickButtons: ["SCO Tasks", "Processing Fee", "ROW Executive Tasks"]
-  },
-  {
-    keywords: ["location","shq","nhq","where","headquarters","state headquarters","location info","work location","which location"],
-    answer: `<strong>📍 Task Locations in ROW Application:</strong>
-<br><br>All ROW Application tasks are performed at <strong>SHQ (State Headquarters)</strong>:
-<br><br>
-<table style="width:100%;border-collapse:collapse;font-size:12.5px;">
-<tr style="background:#003366;color:#fff;"><th style="padding:6px;border:1px solid #ccc;">Task</th><th style="padding:6px;border:1px solid #ccc;">User / Role</th><th style="padding:6px;border:1px solid #ccc;">Location</th></tr>
-<tr><td style="padding:5px;border:1px solid #ddd;">Create ROW Application</td><td style="padding:5px;border:1px solid #ddd;">ROW Executive</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
-<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Application Acknowledgement</td><td style="padding:5px;border:1px solid #ddd;">ROW Executive</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
-<tr><td style="padding:5px;border:1px solid #ddd;">Capture Joint Survey Details</td><td style="padding:5px;border:1px solid #ddd;">ROW Executive</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
-<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Capture Processing Fee</td><td style="padding:5px;border:1px solid #ddd;">ROW Executive</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
-<tr><td style="padding:5px;border:1px solid #ddd;">Processing Fee – Approval L1</td><td style="padding:5px;border:1px solid #ddd;">SCO</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
-<tr style="background:#f5f8ff;"><td style="padding:5px;border:1px solid #ddd;">Processing Fee – Approval L2</td><td style="padding:5px;border:1px solid #ddd;">State FC&A</td><td style="padding:5px;border:1px solid #ddd;"><strong>SHQ</strong></td></tr>
+<br>
+<strong>📌 DN Sub-Types (within New DN & Supplementary DN):</strong>
+<table>
+<tr><th>Sub-Type</th><th>Description</th></tr>
+<tr><td><strong>Full DN</strong></td><td>DN for the total DN length received from the ROW Application</td></tr>
+<tr><td><strong>Partial DN</strong></td><td>DN for partial length out of total (only available in New DN)</td></tr>
+<tr><td><strong>No DN</strong></td><td>No demand note needed – upload ROW Permission & NOC documents directly</td></tr>
 </table>
-<br>💡 <strong>SHQ</strong> = State Headquarters – the central location where all ROW Application workflow tasks are carried out.`,
-    quickButtons: ["Roles & Tasks", "ROW Executive Tasks", "Main Menu"]
+<br>
+<strong>📌 DN Channels (based on DN value):</strong>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+  <span class="channel-badge green">🟢 Green Channel – 3 Approval Levels</span>
+  <span class="channel-badge orange">🟠 Orange Channel – 4 Approval Levels</span>
+  <span class="channel-badge red">🔴 Red Channel – 5 Approval Levels</span>
+</div>
+<br>
+<div class="info-box blue">💡 The channel is <strong>automatically determined by the system</strong> based on the DN value generated during the checklist.</div>`,
+    quickButtons:["New DN","Supplementary DN","DN Channels","DN Payment","Main Menu"]
   },
+
+  // ---- HOW TO CREATE DEMAND NOTE ----
   {
-    keywords: ["who creates","who create application","who generates","create task user","who can create"],
-    answer: `The <strong>Create ROW Application</strong> task is performed by:
+    id:"dn_how_to_create",
+    keywords:["how to create demand note","how to create dn","create demand note","demand note creation steps","dn creation steps","how to make dn","how to raise demand note","raise dn","raise demand note","steps to create dn","dn step by step","demand note step by step","how demand note is created"],
+    answer:`<div class="section-title">📄 How to Create a Demand Note</div>
+Follow these steps to create a Demand Note in the ROW application:
 <br><br>
-<div class="step-card"><span class="step-num">👤 Role:</span> <strong>ROW Executive</strong></div>
-<div class="step-card"><span class="step-num">📍 Location:</span> <strong>SHQ</strong> (State Headquarters)</div>
-<div class="step-card"><span class="step-num">💻 System:</span> <strong>K2, GIS</strong> (Web Application)</div>
-<br>The ROW Executive clicks on "Manage ROW Draft Application" tab on the PUBLIC ROW main tile on the K2 screen to begin creating an application.`,
-    quickButtons: ["Create Application", "ROW Executive Tasks", "Roles & Tasks"]
+<strong>📌 Prerequisites:</strong>
+<div class="info-box blue">Before creating a DN, ensure the following are completed:<br>
+• Application is created & Application Number is generated<br>
+• Processing Fee is approved (L1 & L2)<br>
+• YEXP Number is captured<br>
+• Application Acknowledgement is submitted<br>
+• Joint Survey Findings are submitted</div>
+<br>
+<strong>📌 Step-by-Step DN Creation:</strong>
+<div class="step-card"><span class="step-num">Step 1:</span> Go to <strong>Task List</strong> → The system triggers <strong>"DN Creation Workflow"</strong> after Joint Survey submission.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Choose the <strong>DN Type</strong>:
+  <ul>
+    <li><strong>🆕 New DN</strong> – First time DN on an application</li>
+    <li><strong>📑 Supplementary DN</strong> – Additional DN on a previously raised DN (requires Parent DN Number)</li>
+  </ul>
+</div>
+<div class="step-card"><span class="step-num">Step 3:</span> <strong>Select Application Number</strong> – Choose Network Type (Intercity/Intracity) and Classification (DIT/NON-DIT).</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Choose the <strong>DN Sub-Type</strong>:
+  <ul>
+    <li><strong>Full DN</strong> – DN for the total DN length from application</li>
+    <li><strong>Partial DN</strong> – DN for partial length (only for New DN)</li>
+    <li><strong>No DN</strong> – No demand note needed; directly upload ROW Permission & NOC</li>
+  </ul>
+</div>
+<div class="step-card"><span class="step-num">Step 5:</span> <strong>Capture Demand Note Details</strong> – Enter DN number, DN date, and authority-related details.</div>
+<div class="step-card"><span class="step-num">Step 6:</span> <strong>Capture Fee Details</strong> – Enter Fixed Charges, Recurring Charges, Escalation %, Variance %, and Discount %.</div>
+<div class="step-card"><span class="step-num">Step 7:</span> <strong>Perform DN Checklist</strong> – System auto-calculates DN value and determines the approval channel.</div>
+<div class="step-card"><span class="step-num">Step 8:</span> <strong>Submit</strong> → DN is stored and the <strong>DN Approval Workflow</strong> is triggered based on the channel.</div>
+<br>
+<strong>📌 Channel Assignment (auto-determined):</strong>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+  <span class="channel-badge green">🟢 Green – 3 Approval Levels</span>
+  <span class="channel-badge orange">🟠 Orange – 4 Approval Levels</span>
+  <span class="channel-badge red">🔴 Red – 5 Approval Levels</span>
+</div>
+<br>
+<div class="flow-diagram">
+  <span class="flow-node active-node">Joint Survey Done</span><span class="flow-arrow">→</span>
+  <span class="flow-node">DN Creation Triggered</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Select DN Type</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Capture Details & Fees</span><span class="flow-arrow">→</span>
+  <span class="flow-node">DN Checklist</span><span class="flow-arrow">→</span>
+  <span class="flow-node green">Approval Workflow</span>
+</div>
+<br>
+<div class="info-box">💡 <strong>Role:</strong> DN is created by the <strong>ROW Executive</strong>. After submission, it goes through channel-based approval (Green/Orange/Red).</div>`,
+    quickButtons:["New DN","Supplementary DN","DN Channels","DN Fee Details","DN Payment","Main Menu"]
   },
+
+  // ---- NEW DN CREATION ----
   {
-    keywords: ["who submits","who acknowledges","who submit application","acknowledgement user","who does acknowledgement"],
-    answer: `The <strong>Application Acknowledgement</strong> task is performed by:
+    id:"dn_new",
+    keywords:["new dn","new demand note","initiate new dn","create new dn","dn creation new","full dn new","partial dn","dn new creation","fresh dn"],
+    answer:`<div class="section-title">🆕 New Demand Note Creation</div>
+A new DN is created the first time a demand note is raised for an application.
 <br><br>
-<div class="step-card"><span class="step-num">👤 Role:</span> <strong>ROW Executive</strong></div>
-<div class="step-card"><span class="step-num">📍 Location:</span> <strong>SHQ</strong> (State Headquarters)</div>
-<div class="step-card"><span class="step-num">💻 System:</span> <strong>K2, GIS</strong> (Web Application)</div>
-<br>The task is assigned to the ROW Executive in the Task List after application generation. The user uploads documents and submits the acknowledgement.`,
-    quickButtons: ["Submit Application", "ROW Executive Tasks", "Roles & Tasks"]
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Initiate New DN Creation</strong> – Start the DN creation process.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> <strong>Select Application Number</strong> – Choose Network Type, Application Classification (DIT/NON-DIT).</div>
+<br>
+<div class="info-box blue">
+<strong>Three options available:</strong><br>
+• <strong>Full DN</strong> – DN for total DN length from application<br>
+• <strong>Partial DN</strong> – DN for partial length out of total<br>
+• <strong>No DN</strong> – No DN required
+</div>
+<br>
+<strong>📌 Full DN Path:</strong>
+<div class="step-card"><span class="step-num">Step 3:</span> <strong>Create Full DN Request</strong> – For total DN length from application.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> <strong>Capture Demand Note Details</strong> – DN number, date, authority details.</div>
+<div class="step-card"><span class="step-num">Step 5:</span> <strong>Capture Fee Details</strong> – Fixed & Recurring charges.</div>
+<div class="step-card"><span class="step-num">Step 6:</span> <strong>Perform DN Checklist</strong> – System determines channel (🟢🟠🔴).</div>
+<div class="step-card"><span class="step-num">Step 7:</span> Send notification & trigger appropriate channel workflow.</div>
+<br>
+<strong>📌 Partial DN Path:</strong>
+<div class="step-card"><span class="step-num">Step 3a:</span> <strong>Create Partial DN Request</strong> – For partial length out of total.</div>
+<div class="step-card"><span class="step-num">Step 4a:</span> Capture DN Details → Fee Details → DN Checklist → Channel trigger.</div>
+<br>
+<strong>📌 No DN Path:</strong>
+<div class="step-card"><span class="step-num">Step 3b:</span> Select <strong>No DN Creation</strong> → Upload ROW Permission & NOC documents.</div>
+<br>
+<div class="flow-diagram">
+  <span class="flow-node active-node">Initiate New DN</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Select App</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Full / Partial / No DN</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Capture Details</span><span class="flow-arrow">→</span>
+  <span class="flow-node">DN Checklist</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Channel Trigger</span>
+</div>`,
+    quickButtons:["Supplementary DN","DN Channels","DN Payment","Main Menu"]
   },
+
+  // ---- SUPPLEMENTARY DN ----
   {
-    keywords: ["who does survey","who captures survey","survey user","survey role","who does joint survey"],
-    answer: `The <strong>Capture Joint Survey Details</strong> task is performed by:
+    id:"dn_supplementary",
+    keywords:["supplementary","supplementary dn","supplement","additional dn","parent dn","existing dn","dn supplement","supplementary demand note"],
+    answer:`<div class="section-title">📑 Supplementary Demand Note Creation</div>
+A Supplementary DN is created on a previously raised DN for the same application number.
 <br><br>
-<div class="step-card"><span class="step-num">👤 Role:</span> <strong>ROW Executive</strong></div>
-<div class="step-card"><span class="step-num">📍 Location:</span> <strong>SHQ</strong> (State Headquarters)</div>
-<div class="step-card"><span class="step-num">💻 System:</span> <strong>K2, GIS</strong> (Web Application)</div>
-<br>The ROW Executive enters the joint survey date, uploads the survey finding document, and adds comments.`,
-    quickButtons: ["Joint Survey", "ROW Executive Tasks", "Roles & Tasks"]
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Initiate Supplementary DN Creation</strong></div>
+<div class="step-card"><span class="step-num">Step 2:</span> <strong>Get Parent DN Number</strong> – Link to the original/parent DN.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> <strong>Select Application Number</strong> – Choose Network Type, DIT/NON-DIT classification.</div>
+<br>
+<div class="info-box blue">
+<strong>Two options available:</strong><br>
+• <strong>Full DN</strong> – DN for total DN length from application<br>
+• <strong>No DN</strong> – No DN required (Partial DN not available for Supplementary)
+</div>
+<br>
+<strong>📌 Full DN Path:</strong>
+<div class="step-card"><span class="step-num">Step 4:</span> <strong>Create Full DN Request</strong></div>
+<div class="step-card"><span class="step-num">Step 5:</span> <strong>Capture Demand Note Details</strong></div>
+<div class="step-card"><span class="step-num">Step 6:</span> <strong>Capture Fee Details</strong> – Fixed & Recurring charges</div>
+<div class="step-card"><span class="step-num">Step 7:</span> <strong>Perform DN Checklist</strong> – System determines channel (🟢🟠🔴)</div>
+<div class="step-card"><span class="step-num">Step 8:</span> Store DN details & trigger DN Approval Workflow</div>
+<br>
+<strong>📌 No DN Path:</strong>
+<div class="step-card"><span class="step-num">Step 4a:</span> Select <strong>No DN Creation</strong></div>
+<div class="step-card"><span class="step-num">Step 5a:</span> Upload ROW Permission Document & NOC Document</div>
+<br>
+<div class="info-box">💡 <strong>Key Difference from New DN:</strong> Supplementary DN requires a <strong>Parent DN Number</strong> and does not support Partial DN creation.</div>`,
+    quickButtons:["New DN","DN Channels","DN Payment","Main Menu"]
   },
+
+  // ---- DN CHANNELS & APPROVAL ----
   {
-    keywords: ["who approves","who approves fee","approval user","approval role","who approves processing fee"],
-    answer: `The <strong>Processing Fee Approval</strong> involves two levels:
+    id:"dn_channels",
+    keywords:["channel","green channel","orange channel","red channel","dn approval","dn approve","approval level","approval flow","dn channel","3 level","4 level","5 level","green","orange","red","dn approve flow","demand note approval","state row lead","state sco lead","state fc&a head","sponsor","construction head","execute dn"],
+    answer:`<div class="section-title">🚦 Demand Note Channels & Approval Flow</div>
+The DN channel is <strong>automatically determined by the system</strong> based on the DN value generated during the DN checklist. Each channel has different approval levels.
 <br><br>
-<div class="step-card"><span class="step-num">Level 1 (L1):</span> <strong>SCO</strong> (State Circle Office) – Reviews and approves the fee first</div>
-<div class="step-card"><span class="step-num">Level 2 (L2):</span> <strong>State FC&A</strong> (Finance, Costing & Accounts) – Gives final approval</div>
-<br>Both roles work at <strong>SHQ</strong> on <strong>K2 & GIS</strong> (Web).
-<br><br>📋 <strong>Full Flow:</strong> ROW Executive (captures fee) → SCO (L1 approval) → State FC&A (L2 approval) ✅`,
-    quickButtons: ["SCO Tasks", "State FC&A Tasks", "Processing Fee"]
+<span class="channel-badge green">🟢 GREEN CHANNEL – 3 Levels of Approval</span>
+<div class="flow-diagram" style="margin:8px 0">
+  <span class="flow-node green">L1: State ROW Lead</span><span class="flow-arrow">→</span>
+  <span class="flow-node green">L2: State SCO Lead</span><span class="flow-arrow">→</span>
+  <span class="flow-node green">L3: State FC&A Head</span><span class="flow-arrow">→</span>
+  <span class="flow-node active-node">Execute DN<br><small>State FC&A Lead</small></span>
+</div>
+<br>
+<span class="channel-badge orange">🟠 ORANGE CHANNEL – 4 Levels of Approval</span>
+<div class="flow-diagram" style="margin:8px 0">
+  <span class="flow-node orange">L1: State ROW Lead</span><span class="flow-arrow">→</span>
+  <span class="flow-node orange">L2: State SCO Lead</span><span class="flow-arrow">→</span>
+  <span class="flow-node orange">L3: Sponsor</span><span class="flow-arrow">→</span>
+  <span class="flow-node orange">L4: State FC&A Head</span><span class="flow-arrow">→</span>
+  <span class="flow-node active-node">Execute DN<br><small>State FC&A Lead</small></span>
+</div>
+<br>
+<span class="channel-badge red">🔴 RED CHANNEL – 5 Levels of Approval</span>
+<div class="flow-diagram" style="margin:8px 0">
+  <span class="flow-node red">L1: State ROW Lead</span><span class="flow-arrow">→</span>
+  <span class="flow-node red">L2: State Construction Head</span><span class="flow-arrow">→</span>
+  <span class="flow-node red">L3: State SCO Lead</span><span class="flow-arrow">→</span>
+  <span class="flow-node red">L4: Sponsor</span><span class="flow-arrow">→</span>
+  <span class="flow-node red">L5: State FC&A Head</span><span class="flow-arrow">→</span>
+  <span class="flow-node active-node">Execute DN<br><small>State FC&A Lead</small></span>
+</div>
+<br>
+<div class="info-box">
+<strong>At each level:</strong><br>
+✅ <strong>Approved</strong> → Triggers next level approval task<br>
+❌ <strong>Rejected</strong> → Rework on DN (sent back to ROW Executive)
+</div>
+<br>
+<table>
+<tr><th>Channel</th><th>Levels</th><th>Approvers</th></tr>
+<tr><td><span class="channel-badge green">🟢 Green</span></td><td>3</td><td>State ROW Lead → State SCO Lead → State FC&A Head</td></tr>
+<tr><td><span class="channel-badge orange">🟠 Orange</span></td><td>4</td><td>State ROW Lead → State SCO Lead → Sponsor → State FC&A Head</td></tr>
+<tr><td><span class="channel-badge red">🔴 Red</span></td><td>5</td><td>State ROW Lead → State Construction Head → State SCO Lead → Sponsor → State FC&A Head</td></tr>
+</table>`,
+    quickButtons:["DN Payment","New DN","Demand Note","Approver Roles","Main Menu"]
   },
+
+  // ---- DN PAYMENT ----
   {
-    keywords: ["error","issue","problem","not working","fail","stuck","trouble"],
-    answer: `If you're facing issues, try these steps:
+    id:"dn_payment",
+    keywords:["dn payment","demand note payment","payment instrument","pay authority","payment status","dn execute","bg","sd","bank guarantee","security deposit","refund","refundable","noc","permission document","row permission","dn payment doc","collect bg","collect sd"],
+    answer:`<div class="section-title">💸 Demand Note Payment & Execution</div>
+After DN approval, the payment process begins:
+<br><br>
+<strong>📌 Payment Steps:</strong>
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Execute DN</strong> – State FC&A Lead executes the approved DN (channel-specific).</div>
+<div class="step-card"><span class="step-num">Step 2:</span> <strong>Create Payment Instrument</strong> – ROW Executive creates payment instrument in <strong>SAP Finance & Control</strong>.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> <strong>Update DN Payment Doc Status</strong> – Update in K2.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> <strong>Do DN Payment to Authority</strong> – Execute payment in SAP.</div>
+<div class="step-card"><span class="step-num">Step 5:</span> <strong>Update DN Payment Details</strong> – State ROW Lead updates payment info.</div>
+<br>
+<strong>📌 Post-Payment:</strong>
+<div class="step-card"><span class="step-num">Step 6:</span> <strong>Upload ROW Permission Document</strong> – ROW Executive uploads permission docs.</div>
+<div class="step-card"><span class="step-num">Step 7:</span> <strong>Upload NOC Document</strong> – State ROW Lead uploads NOC.</div>
+<br>
+<strong>📌 BG / SD (Bank Guarantee / Security Deposit) – If Refund Applicable:</strong>
+<div class="step-card"><span class="step-num">Step 8:</span> <strong>Capture BG/SD Collection Details</strong> – State ROW Lead records collection.</div>
+<div class="step-card"><span class="step-num">Step 9:</span> <strong>Initiate BG/SD Acknowledgment</strong> – System triggers acknowledgment.</div>
+<div class="step-card"><span class="step-num">Step 10:</span> <strong>Collect Refundable BG/SD Acknowledgement</strong> – State FC&A Lead collects.</div>
+<br>
+<div class="flow-diagram">
+  <span class="flow-node active-node">Execute DN</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Create Payment</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Pay Authority</span><span class="flow-arrow">→</span>
+  <span class="flow-node">Upload Docs</span><span class="flow-arrow">→</span>
+  <span class="flow-node">BG/SD (if applicable)</span>
+</div>
+`,
+    quickButtons:["DN Channels","Demand Note","Roles & Tasks","Main Menu"]
+  },
+
+  // ---- ROLES & TASKS ----
+  {
+    id:"roles",
+    keywords:["role","who","permission","task","assign","responsible","roles and tasks","user role","all roles","role mapping","task mapping"],
+    answer:`<div class="section-title">👥 Complete Role & Task Mapping</div>
+<table>
+<tr><th>Role</th><th>Key Responsibilities</th><th>Location</th></tr>
+<tr><td><strong>ROW Executive</strong></td><td>Authority Creation, Application Creation, Capture Fees, Acknowledgment, Survey, DN Creation, Payment Execution</td><td>SHQ</td></tr>
+<tr><td><strong>SCO</strong></td><td>Processing Fee – L1 Approval</td><td>SHQ</td></tr>
+<tr><td><strong>State FC&A</strong></td><td>Processing Fee – L2 Approval</td><td>SHQ</td></tr>
+<tr><td><strong>State FC&A Lead</strong></td><td>Rate Update Configuration, Execute DN (all channels), BG/SD Acknowledgment</td><td>SHQ</td></tr>
+<tr><td><strong>State FC&A Head</strong></td><td>DN Approval (Green L3, Orange L4, Red L5)</td><td>SHQ</td></tr>
+<tr><td><strong>NHQ FC&A</strong></td><td>Rate Approval (methodology-wise per meter rate)</td><td>NHQ</td></tr>
+<tr><td><strong>State ROW Lead</strong></td><td>DN Approval L1 (all channels), Update Payment Details, Upload NOC, BG/SD Collection</td><td>SHQ</td></tr>
+<tr><td><strong>State SCO Lead</strong></td><td>DN Approval (Green L2, Orange L2, Red L3)</td><td>SHQ</td></tr>
+<tr><td><strong>Sponsor</strong></td><td>DN Approval (Orange L3, Red L4)</td><td>SHQ</td></tr>
+<tr><td><strong>State Construction Head</strong></td><td>DN Approval – Red Channel L2</td><td>SHQ</td></tr>
+</table>
+<br>
+<div class="info-box blue">💡 All tasks run on <strong>K2 P2B (Workflow)</strong> and/or <strong>SAP Finance & Control</strong> as Web applications.</div>`,
+    quickButtons:["ROW Executive","Approver Roles","Authority Creation","DN Channels","Main Menu"]
+  },
+
+  // ---- ROW EXECUTIVE ----
+  {
+    id:"row_executive",
+    keywords:["row executive","executive","row executive tasks","what does row executive do","executive role","executive tasks","executive responsibility"],
+    answer:`<div class="section-title">👤 ROW Executive – Complete Task List</div>
+The ROW Executive is the <strong>primary field user</strong> who drives the ROW process end-to-end.
+<br><br>
+<table>
+<tr><th>Process Area</th><th>Tasks</th></tr>
+<tr><td><strong>Authority</strong></td><td>Select City/JC/JP/Type → Add Authority Details</td></tr>
+<tr><td><strong>Application</strong></td><td>Receive scope notification → Initiate draft → Get segments → Generate App Number</td></tr>
+<tr><td><strong>Processing Fee</strong></td><td>Capture processing fee → Rework if rejected</td></tr>
+<tr><td><strong>YEXP</strong></td><td>Receive L2 approval → Enter manual YEXP → Submit payment doc status</td></tr>
+<tr><td><strong>Permission</strong></td><td>Update verbal permission flag → Upload verbal permission documents</td></tr>
+<tr><td><strong>Acknowledgment</strong></td><td>Submit application acknowledgement details</td></tr>
+<tr><td><strong>Survey</strong></td><td>Submit joint survey findings</td></tr>
+<tr><td><strong>Demand Note</strong></td><td>Create DN (New/Supplementary) → Capture DN details → Fee details → DN Checklist</td></tr>
+<tr><td><strong>DN Payment</strong></td><td>Create payment instrument (SAP) → Update DN payment doc status → Execute payment</td></tr>
+<tr><td><strong>Documents</strong></td><td>Upload ROW permission document, NOC document</td></tr>
+<tr><td><strong>Rework</strong></td><td>Rework on processing fee → Rework on DN (after rejection)</td></tr>
+</table>
+<br>
+<div class="info-box blue">📍 <strong>Location:</strong> SHQ | 💻 <strong>Systems:</strong> K2 P2B + SAP Finance & Control | <strong>App Type:</strong> Web (OSP)</div>`,
+    quickButtons:["Approver Roles","Create Application","Demand Note","Main Menu"]
+  },
+
+  // ---- APPROVER ROLES ----
+  {
+    id:"approvers",
+    keywords:["approver","approver roles","who approves","approval user","approval role","who approves fee","who approves dn","sco tasks","sco role","state circle","fc&a tasks","fca tasks","fca role","finance","state row lead","state sco lead","sponsor","construction head","state fc&a head","nhq fc&a"],
+    answer:`<div class="section-title">✅ Approver Roles – Who Approves What?</div>
+<br>
+<strong>💳 Processing Fee Approval:</strong>
+<div class="flow-diagram">
+  <span class="flow-node">ROW Executive</span><span class="flow-arrow">→</span>
+  <span class="flow-node active-node">SCO (L1)</span><span class="flow-arrow">→</span>
+  <span class="flow-node active-node">State FC&A (L2)</span>
+</div>
+<br>
+<strong>💰 Rate Update Approval:</strong>
+<div class="flow-diagram">
+  <span class="flow-node">State FC&A Lead</span><span class="flow-arrow">→</span>
+  <span class="flow-node active-node">NHQ FC&A</span>
+</div>
+<br>
+<strong>📄 DN Approval (by Channel):</strong>
+<table>
+<tr><th>Level</th><th>🟢 Green</th><th>🟠 Orange</th><th>🔴 Red</th></tr>
+<tr><td><strong>L1</strong></td><td>State ROW Lead</td><td>State ROW Lead</td><td>State ROW Lead</td></tr>
+<tr><td><strong>L2</strong></td><td>State SCO Lead</td><td>State SCO Lead</td><td>State Construction Head</td></tr>
+<tr><td><strong>L3</strong></td><td>State FC&A Head</td><td>Sponsor</td><td>State SCO Lead</td></tr>
+<tr><td><strong>L4</strong></td><td>—</td><td>State FC&A Head</td><td>Sponsor</td></tr>
+<tr><td><strong>L5</strong></td><td>—</td><td>—</td><td>State FC&A Head</td></tr>
+<tr><td><strong>Execute</strong></td><td>State FC&A Lead</td><td>State FC&A Lead</td><td>State FC&A Lead</td></tr>
+</table>
+<br>
+<div class="info-box">💡 At every approval level: <strong>Approve</strong> moves to next level | <strong>Reject</strong> sends DN back to ROW Executive for rework.</div>`,
+    quickButtons:["DN Channels","Processing Fee","Roles & Tasks","Main Menu"]
+  },
+
+  // ---- GIS & SPAN MANAGEMENT ----
+  {
+    id:"gis",
+    keywords:["gis","map","geographic","gis map","route","fiber","network","layer filter","search","span","pole","crossing","split","span split","merge","merge application","merge span","combine","update authority","feature id","construction type","methodology","intracity","intercity"],
+    answer:`<div class="section-title">🗺️ GIS & Span Management</div>
+The GIS system is used for geographic span management and visualization.
+<br><br>
+<strong>📌 Searching Span/Pole/Crossing:</strong>
+<div class="step-card"><span class="step-num">Step 1:</span> Fill search filters: Phase, Jio State, Political State, MP, Authority Category, Authority, Network Type.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Click <strong>"Search"</strong> → Select Link/Route from dropdown.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Click <strong>"Get Span"</strong>, <strong>"Get Pole"</strong>, or <strong>"Get Crossing"</strong>.</div>
+<div class="step-card"><span class="step-num">Results:</span> Feature ID, Length, UOM, Construction Type & Methodology.</div>
+<br>
+<strong>📌 Splitting Spans on GIS:</strong>
+<div class="step-card"><span class="step-num">Step 1:</span> Go to <strong>Update Authority from GIS Page</strong>.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Fill filters: Jio State, State, MP, Network Type, Link Id, Span Id, Feature Type.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Click <strong>"Submit"</strong> to load span on GIS map.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Click <strong>"Start Split"</strong> → Mark split point on map → Click <strong>"Save Split"</strong>.</div>
+<br>
+<strong>📌 Other GIS Actions:</strong>
 <ul>
-  <li>✅ Make sure you're logged into the <strong>K2 platform</strong></li>
-  <li>✅ Check all <strong>mandatory fields</strong> are filled (marked with *)</li>
-  <li>✅ Ensure correct <strong>Authority Category & Name</strong> are selected</li>
-  <li>✅ Verify the <strong>Network Type</strong> matches (INTERCITY / INTRACITY)</li>
-  <li>✅ Check your <strong>role permissions</strong> – you need ROW Executive role</li>
-  <li>✅ Try refreshing the page or clearing browser cache</li>
-  <li>✅ For GIS issues, ensure correct Link Id and Span Id are selected</li>
+  <li><strong>Merge Span</strong> – Combine split spans</li>
+  <li><strong>Stop Split</strong> / <strong>Reset Split</strong> / <strong>ReSplit</strong></li>
+  <li><strong>Update Authority</strong> – Select span → Choose Authority Category & Name → Click Update</li>
 </ul>
-If the problem persists, contact your system administrator.`,
-    quickButtons: ["Main Menu"]
+<br>
+<strong>📌 Merge Applications:</strong>
+<div class="step-card"><span class="step-num">Step 1:</span> Click <strong>"Manage Application OneFiber"</strong> under PUBLIC ROW.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Select Network Type, fill search filters → Select draft applications to merge.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Review App Length, Pole Count, Crossing Count, Processing Fee flag.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Click <strong>"Generate Merged Application"</strong>.</div>`,
+    quickButtons:["Create Application","Authority Creation","Roles & Tasks","Main Menu"]
   },
+
+  // ---- GLOSSARY ----
   {
-    keywords: ["glossary","abbreviation","meaning","what does","stand for","full form","nld","rws","hdd","ug","dit","fttx","mp","shq"],
-    answer: `<strong>Common Abbreviations:</strong>
+    id:"glossary",
+    keywords:["glossary","abbreviation","meaning","what does","stand for","full form","nld","rws","hdd","ug","dit","fttx","mp","shq","nhq","acronym"],
+    answer:`<div class="section-title">📖 Glossary of Terms & Abbreviations</div>
+<table>
+<tr><th>Abbreviation</th><th>Full Form</th></tr>
+<tr><td><strong>ROW</strong></td><td>Right of Way</td></tr>
+<tr><td><strong>DN</strong></td><td>Demand Note</td></tr>
+<tr><td><strong>K2 P2B</strong></td><td>K2 Plan to Build – Workflow Management Platform</td></tr>
+<tr><td><strong>GIS</strong></td><td>Geographic Information System</td></tr>
+<tr><td><strong>FTTX</strong></td><td>Fiber to the X</td></tr>
+<tr><td><strong>SAP F&C</strong></td><td>SAP Finance & Control</td></tr>
+<tr><td><strong>YEXP</strong></td><td>SAP Financial Expense Number</td></tr>
+<tr><td><strong>SPAN</strong></td><td>Fiber cable segment between two points</td></tr>
+<tr><td><strong>RWS</strong></td><td>ROW Span Identifier</td></tr>
+<tr><td><strong>NHAI</strong></td><td>National Highways Authority of India</td></tr>
+<tr><td><strong>PWD</strong></td><td>Public Works Department</td></tr>
+<tr><td><strong>DIT</strong></td><td>Department of Information Technology</td></tr>
+<tr><td><strong>SCO</strong></td><td>State Circle Office</td></tr>
+<tr><td><strong>FC&A</strong></td><td>Finance, Costing & Accounts</td></tr>
+<tr><td><strong>MP</strong></td><td>Maintenance Point</td></tr>
+<tr><td><strong>HDD</strong></td><td>Horizontal Directional Drilling</td></tr>
+<tr><td><strong>UG</strong></td><td>Underground (Construction Method)</td></tr>
+<tr><td><strong>NLD</strong></td><td>National Long Distance</td></tr>
+<tr><td><strong>SHQ</strong></td><td>State Headquarters</td></tr>
+<tr><td><strong>NHQ</strong></td><td>National Headquarters</td></tr>
+<tr><td><strong>NOC</strong></td><td>No Objection Certificate</td></tr>
+<tr><td><strong>BG</strong></td><td>Bank Guarantee</td></tr>
+<tr><td><strong>SD</strong></td><td>Security Deposit</td></tr>
+<tr><td><strong>JC</strong></td><td>Jio Circle</td></tr>
+<tr><td><strong>JP</strong></td><td>Jio Point</td></tr>
+<tr><td><strong>ISP</strong></td><td>Inside Plant</td></tr>
+<tr><td><strong>OSP</strong></td><td>Outside Plant</td></tr>
+</table>`,
+    quickButtons:["Process Overview","Main Menu"]
+  },
+
+  // ---- TROUBLESHOOTING ----
+  {
+    id:"troubleshoot",
+    keywords:["error","issue","problem","not working","fail","stuck","trouble","troubleshoot","troubleshooting","fix","help me"],
+    answer:`<div class="section-title">⚠️ Troubleshooting Guide</div>
+If you're facing issues, check these common solutions:
+<br><br>
+<div class="step-card"><span class="step-num">✅</span> Make sure you're logged into the <strong>K2 P2B platform</strong>.</div>
+<div class="step-card"><span class="step-num">✅</span> Check all <strong>mandatory fields</strong> are filled (marked with *).</div>
+<div class="step-card"><span class="step-num">✅</span> Ensure correct <strong>Authority Category & Name</strong> are selected.</div>
+<div class="step-card"><span class="step-num">✅</span> Verify the <strong>Network Type</strong> matches (INTERCITY / INTRACITY).</div>
+<div class="step-card"><span class="step-num">✅</span> Check your <strong>role permissions</strong> – different tasks need different roles.</div>
+<div class="step-card"><span class="step-num">✅</span> For GIS issues, ensure correct Link Id and Span Id are selected.</div>
+<div class="step-card"><span class="step-num">✅</span> For DN issues, ensure the correct DN type (New/Supplementary) and sub-type (Full/Partial/No DN) are chosen.</div>
+<div class="step-card"><span class="step-num">✅</span> For payment issues, verify <strong>YEXP Number</strong> is correctly captured.</div>
+<div class="step-card"><span class="step-num">✅</span> Try refreshing the page or clearing browser cache.</div>
+<br>
+<div class="info-box red-box">🔧 If the problem persists, contact your <strong>system administrator</strong> or raise a support ticket.</div>`,
+    quickButtons:["Glossary","Roles & Tasks","Main Menu"]
+  },
+
+  // ---- THANK YOU / BYE ----
+  {
+    id:"thanks",
+    keywords:["thank","thanks","bye","goodbye","ok","okay","got it","great","understood","nice"],
+    answer:`You're welcome! 😊 Feel free to ask anytime you need help with the ROW process. I'm always here to assist!
+<br><br>Quick access to popular topics:`,
+    quickButtons:["Authority Creation","Create Application","Demand Note","DN Channels","Roles & Tasks","Main Menu"]
+  },
+
+  // ---- DN FEE DETAILS ----
+  {
+    id:"dn_fee",
+    keywords:["dn fee","fee details","fixed charges","recurring charges","dn checklist","dn value","fee capture","capture fee details","dn fixed","dn recurring"],
+    answer:`<div class="section-title">💰 DN Fee Details – Fixed & Recurring Charges</div>
+During DN creation, fee details need to be captured:
+<br><br>
+<strong>📌 Fee Components:</strong>
+<table>
+<tr><th>Fee Type</th><th>Description</th></tr>
+<tr><td><strong>Fixed Charges</strong></td><td>One-time charges per crossing/meter (varies by authority)</td></tr>
+<tr><td><strong>Recurring Charges</strong></td><td>Annual/periodic charges for ongoing usage</td></tr>
+<tr><td><strong>Escalation (%)</strong></td><td>Annual increase in recurring charges</td></tr>
+<tr><td><strong>Variance (%)</strong></td><td>Upper & lower variance on fixed charges</td></tr>
+<tr><td><strong>Discount (%)</strong></td><td>Any applicable discount</td></tr>
+</table>
+<br>
+<strong>📌 DN Checklist:</strong><br>
+After fee capture, the <strong>DN Checklist</strong> is performed. The system automatically determines the channel based on the DN value:
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0">
+  <span class="channel-badge green">🟢 Green – Low value</span>
+  <span class="channel-badge orange">🟠 Orange – Medium value</span>
+  <span class="channel-badge red">🔴 Red – High value</span>
+</div>
+<br>
+<div class="info-box blue">💡 The channel determines the number of approval levels required before DN execution.</div>`,
+    quickButtons:["DN Channels","New DN","Supplementary DN","Rate Update","Main Menu"]
+  },
+
+  // ---- REWORK ----
+  {
+    id:"rework",
+    keywords:["rework","rejected","rejection","rework fee","rework dn","reject dn","reject fee","sent back","resubmit"],
+    answer:`<div class="section-title">🔄 Rework – On Rejection</div>
+When a processing fee or DN is rejected by an approver, it goes back to the ROW Executive for rework.
+<br><br>
+<strong>📌 Processing Fee Rework:</strong>
+<div class="step-card"><span class="step-num">1.</span> If <strong>SCO (L1)</strong> or <strong>State FC&A (L2)</strong> rejects the processing fee →</div>
+<div class="step-card"><span class="step-num">2.</span> Task <strong>"Rework on Application Processing Fee"</strong> is assigned to ROW Executive.</div>
+<div class="step-card"><span class="step-num">3.</span> ROW Executive corrects the fee details and resubmits.</div>
+<br>
+<strong>📌 DN Rework:</strong>
+<div class="step-card"><span class="step-num">1.</span> If any approver at any level (L1-L5) rejects the DN →</div>
+<div class="step-card"><span class="step-num">2.</span> Task <strong>"Rework DN"</strong> is assigned to ROW Executive.</div>
+<div class="step-card"><span class="step-num">3.</span> ROW Executive corrects the DN and resubmits for approval from the beginning.</div>
+<br>
+<div class="flow-diagram">
+  <span class="flow-node red">❌ Rejected</span><span class="flow-arrow">→</span>
+  <span class="flow-node active-node">ROW Executive<br><small>Rework</small></span><span class="flow-arrow">→</span>
+  <span class="flow-node">Re-submit for Approval</span>
+</div>`,
+    quickButtons:["Processing Fee","DN Channels","Main Menu"]
+  },
+
+  // ---- ACCESS / LOGIN ----
+  {
+    id:"access",
+    keywords:["access","login","open","navigate","home","k2","fttx","get started","where to start","how to start","url","platform"],
+    answer:`<div class="section-title">🖥️ Accessing the ROW Application</div>
+<div class="step-card"><span class="step-num">Step 1:</span> Log in to the <strong>K2 P2B platform</strong>.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> Navigate to the <strong>FTTX Home</strong> screen.</div>
+<div class="step-card"><span class="step-num">Step 3:</span> Find the <strong>PUBLIC ROW</strong> tile on the left side.</div>
+<div class="step-card"><span class="step-num">Step 4:</span> Choose the appropriate action:</div>
 <ul>
-  <li><strong>ROW</strong> – Right of Way</li>
-  <li><strong>K2</strong> – Workflow management platform</li>
-  <li><strong>GIS</strong> – Geographic Information System</li>
-  <li><strong>FTTX</strong> – Fiber to the X</li>
-  <li><strong>SPAN</strong> – Fiber cable segment between two points</li>
-  <li><strong>RWS</strong> – ROW Span identifier</li>
-  <li><strong>NHAI</strong> – National Highways Authority of India</li>
-  <li><strong>PWD</strong> – Public Works Department</li>
-  <li><strong>DIT</strong> – Department of Information Technology</li>
-  <li><strong>SCO</strong> – State Circle Office</li>
-  <li><strong>FC&A</strong> – Finance, Costing & Accounts</li>
-  <li><strong>MP</strong> – Maintenance Point</li>
-  <li><strong>HDD</strong> – Horizontal Directional Drilling</li>
-  <li><strong>UG</strong> – Underground (construction method)</li>
-  <li><strong>NLD</strong> – National Long Distance</li>
-  <li><strong>SHQ</strong> – State Headquarters</li>
-</ul>`,
-    quickButtons: ["Main Menu"]
+  <li><strong>"Manage Draft Application (Intercity & Intracity)"</strong> – For creating applications</li>
+  <li><strong>"Manage Application OneFiber"</strong> – For merging applications</li>
+  <li><strong>"Update ROW Authority (GIS)"</strong> – For span/authority management</li>
+</ul>
+<br>
+<div class="info-box blue">💡 FTTX Home URL: <a href="#">https://ospreplica.jio.com/Runtime/Runtime/Form/FTTX__HOME/</a></div>`,
+    quickButtons:["Create Application","GIS Map","Authority Creation","Main Menu"]
   },
+
+  // ---- VERBAL PERMISSION ----
   {
-    keywords: ["thank","thanks","bye","goodbye","ok","okay","got it"],
-    answer: `You're welcome! 😊 Feel free to ask anytime you need help with the ROW Application. I'm here to assist you!`,
-    quickButtons: ["Main Menu"]
+    id:"verbal_permission",
+    keywords:["verbal","verbal permission","verbal row","permission flag","permission availability","verbal documents"],
+    answer:`<div class="section-title">📋 Verbal ROW Permission</div>
+Verbal permission is captured when an authority provides preliminary approval verbally.
+<br><br>
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Update Verbal ROW Permission Availability Flag</strong> – Mark Yes/No if verbal permission exists.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> <strong>Upload Verbal Permission Documents</strong> – If available, upload supporting documents.</div>
+<div class="info-box">💡 Verbal permission is captured before formal acknowledgement submission.</div>`,
+    quickButtons:["Acknowledgement","Create Application","Main Menu"]
+  },
+
+  // ---- NOC DOCUMENT ----
+  {
+    id:"noc",
+    keywords:["noc","no objection","no objection certificate","noc document","upload noc","permission document","row permission document","upload permission"],
+    answer:`<div class="section-title">📃 ROW Permission & NOC Documents</div>
+After DN payment or when No DN is selected, permission and NOC documents are uploaded:
+<br><br>
+<div class="step-card"><span class="step-num">Step 1:</span> <strong>Upload ROW Permission Document</strong> – Done by ROW Executive.</div>
+<div class="step-card"><span class="step-num">Step 2:</span> <strong>Upload NOC (No Objection Certificate)</strong> – Done by State ROW Lead.</div>
+<br>
+<div class="info-box blue">💡 These documents serve as formal approval from the authority for fiber laying along the right of way.</div>
+<br>
+<strong>When are these uploaded?</strong><br>
+• After <strong>DN Payment</strong> is completed (post-payment), OR<br>
+• When <strong>"No DN"</strong> is selected during DN creation (directly upload without payment)`,
+    quickButtons:["DN Payment","Demand Note","Main Menu"]
   }
 ];
 
-// ============================
-// DOM
-// ============================
+// ============================================================
+// DOM REFERENCES
+// ============================================================
 const chatMessages = document.getElementById('chatMessages');
 const userInput    = document.getElementById('userInput');
 const sendBtn      = document.getElementById('sendBtn');
 
-// ============================
-// HELPERS
-// ============================
-function addMessage(html, sender, quickButtons) {
-  const wrapper = document.createElement('div');
-  wrapper.className = `msg ${sender}`;
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  bubble.innerHTML = html;
+// ============================================================
+// MESSAGE HELPERS
+// ============================================================
+function addMessage(html,sender,quickButtons){
+  const wrapper=document.createElement('div');
+  wrapper.className=`msg ${sender}`;
+  const bubble=document.createElement('div');
+  bubble.className='bubble';
+  bubble.innerHTML=html;
   wrapper.appendChild(bubble);
-
-  if (quickButtons && quickButtons.length) {
-    const qDiv = document.createElement('div');
-    qDiv.className = 'quick-buttons';
-    quickButtons.forEach(label => {
-      const btn = document.createElement('button');
-      btn.className = 'quick-btn';
-      btn.textContent = label;
-      btn.addEventListener('click', () => handleQuickButton(label));
+  if(quickButtons&&quickButtons.length){
+    const qDiv=document.createElement('div');
+    qDiv.className='quick-buttons';
+    quickButtons.forEach(label=>{
+      const btn=document.createElement('button');
+      btn.className='quick-btn';
+      btn.textContent=label;
+      btn.addEventListener('click',()=>handleQuickButton(label));
       qDiv.appendChild(btn);
     });
     wrapper.appendChild(qDiv);
   }
-
   chatMessages.appendChild(wrapper);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  chatMessages.scrollTop=chatMessages.scrollHeight;
 }
 
-function showTyping() {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'msg bot';
-  wrapper.id = 'typingIndicator';
-  wrapper.innerHTML = '<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
-  chatMessages.appendChild(wrapper);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+function showTyping(){
+  const w=document.createElement('div');
+  w.className='msg bot';w.id='typingIndicator';
+  w.innerHTML='<div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  chatMessages.appendChild(w);chatMessages.scrollTop=chatMessages.scrollHeight;
 }
+function removeTyping(){const t=document.getElementById('typingIndicator');if(t)t.remove()}
 
-function removeTyping() {
-  const t = document.getElementById('typingIndicator');
-  if (t) t.remove();
-}
+// ============================================================
+// MATCHING ENGINE (enhanced scoring)
+// ============================================================
+function findAnswer(input){
+  const lower=input.toLowerCase().trim();
+  let bestMatch=null,bestScore=0;
 
-// ============================
-// MATCHING
-// ============================
-function findAnswer(input) {
-  const lower = input.toLowerCase().trim();
-
-  let bestMatch = null;
-  let bestScore = 0;
-
-  for (const entry of KB) {
-    let score = 0;
-    for (const kw of entry.keywords) {
-      if (lower.includes(kw)) {
-        score += kw.length;           // longer keyword matches = higher score
-        if (lower === kw) score += 10; // exact match bonus
+  for(const entry of KB){
+    let score=0;
+    for(const kw of entry.keywords){
+      if(lower===kw){score+=kw.length+15}        // exact match bonus
+      else if(lower.includes(kw)){
+        score+=kw.length;
+        // bonus for multi-word keyword matches
+        if(kw.includes(' '))score+=5;
+      }
+      // partial word matching
+      else{
+        const words=kw.split(/\s+/);
+        const inputWords=lower.split(/\s+/);
+        let partialScore=0;
+        for(const w of words){
+          for(const iw of inputWords){
+            if(iw.includes(w)||w.includes(iw)){
+              partialScore+=Math.min(w.length,iw.length)*0.5;
+            }
+          }
+        }
+        score+=partialScore;
       }
     }
-    if (score > bestScore) {
-      bestScore = score;
-      bestMatch = entry;
-    }
+    if(score>bestScore){bestScore=score;bestMatch=entry}
   }
 
-  if (bestMatch && bestScore > 0) return bestMatch;
+  if(bestMatch&&bestScore>2)return bestMatch;
 
-  return {
-    answer: `I'm not sure about that. Could you try asking in a different way? Here are some topics I can help with:`,
-    quickButtons: ["Create Application", "Search Span", "Split Span", "Merge Application", "Submit Application", "Joint Survey", "Processing Fee", "Glossary", "Main Menu"]
+  return{
+    answer:`I'm not sure about that. Could you try asking in a different way? Here are some topics I can help with:`,
+    quickButtons:["Create Application","Search Span","Split Span","Merge Application","Submit Application","Joint Survey","Processing Fee","Glossary","Main Menu"]
   };
 }
 
-// ============================
+// ============================================================
 // HANDLE INPUT
-// ============================
-function handleUserMessage(text) {
-  if (!text.trim()) return;
-  addMessage(text, 'user');
-  userInput.value = '';
-
+// ============================================================
+function handleUserMessage(text){
+  if(!text.trim())return;
+  addMessage(text,'user');
+  userInput.value='';
   showTyping();
-
-  setTimeout(() => {
+  setTimeout(()=>{
     removeTyping();
-    const result = findAnswer(text);
-    addMessage(result.answer, 'bot', result.quickButtons);
-  }, 500 + Math.random() * 400);
+    const result=findAnswer(text);
+    addMessage(result.answer,'bot',result.quickButtons);
+  },400+Math.random()*300);
 }
 
-function handleQuickButton(label) {
-  const map = {
-    "Main Menu": "hello",
-    "Create Application": "how to create a new ROW application",
-    "Search Span": "how to search for span details",
-    "Split Span": "how to split a span",
-    "Merge Application": "how to merge applications",
-    "Submit Application": "how to submit application acknowledgement",
-    "Joint Survey": "how to capture joint survey details",
-    "Processing Fee": "how to capture processing fee",
-    "Update Authority": "how to update authority",
-    "Glossary": "glossary abbreviations",
-    "Roles & Tasks": "roles and tasks",
-    "ROW Executive Tasks": "row executive tasks",
-    "SCO Tasks": "sco tasks",
-    "State FC&A Tasks": "state fc&a tasks",
-    "Location Info": "location info shq"
+function handleQuickButton(label){
+  const map={
+    "Main Menu":"hello",
+    "Authority Creation":"authority creation how to create authority",
+    "Rate Update":"row rate update authority methodology mapping",
+    "Create Application":"how to create a new ROW application",
+    "Processing Fee":"application processing fee approval",
+    "Acknowledgement":"submit application acknowledgement",
+    "Joint Survey":"how to capture joint survey details",
+    "YEXP Number":"yexp number sap finance",
+    "Demand Note":"demand note overview dn types",
+    "New DN":"new demand note creation",
+    "Supplementary DN":"supplementary demand note creation",
+    "DN Channels":"dn channels green orange red approval flow",
+    "DN Payment":"demand note payment execution",
+    "DN Fee Details":"dn fee details fixed recurring charges",
+    "Roles & Tasks":"roles and tasks complete mapping",
+    "ROW Executive":"row executive tasks responsibilities",
+    "Approver Roles":"approver roles who approves",
+    "GIS Map":"gis map span management search split",
+    "Glossary":"glossary abbreviations full form",
+    "Troubleshooting":"troubleshooting error help",
+    "Process Overview":"overview complete process flow lifecycle",
+    "Rework":"rework rejected rejection",
+    "Verbal Permission":"verbal permission flag documents",
+    "NOC Document":"noc no objection certificate upload",
+    "Search Span":"gis map span search",
+    "Split Span":"gis map span split",
+    "Merge Application":"gis merge application",
+    "Submit Application":"submit application acknowledgement",
+    "Create Demand Note":"how to create demand note step by step"
   };
-  const query = map[label] || label;
+  const query=map[label]||label;
   handleUserMessage(query);
 }
 
-// ============================
+// ============================================================
 // EVENTS
-// ============================
-sendBtn.addEventListener('click', () => handleUserMessage(userInput.value));
-userInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') handleUserMessage(userInput.value);
-});
+// ============================================================
+sendBtn.addEventListener('click',()=>handleUserMessage(userInput.value));
+userInput.addEventListener('keydown',e=>{if(e.key==='Enter')handleUserMessage(userInput.value)});
 
-// ============================
-// WELCOME MESSAGE
-// ============================
-setTimeout(() => {
+// ============================================================
+// WELCOME
+// ============================================================
+setTimeout(()=>{
   addMessage(
-    `Hello! 👋 Welcome to the <strong>ROW Application Assistant</strong>.<br><br>I can guide you through the entire ROW Application process — from creating applications to processing fee approvals. You can also ask me about <strong>roles, tasks, users & locations</strong>.<br><br>Choose a topic below or type your question!`,
+    `<div class="section-title">👋 Welcome to the ROW Application Assistant!</div>
+Hello! I'm your <strong>Right of Way (ROW) Application Expert</strong>. I can guide field users through the complete ROW process including:
+<br><br>
+<table>
+<tr><th>🏛️ Authority</th><td>Authority Creation & Rate Update with approval flows</td></tr>
+<tr><th>📝 Application</th><td>Creation (DIT/NON-DIT), Processing Fee, Acknowledgement & Joint Survey</td></tr>
+<tr><th>📄 Demand Note</th><td>New DN & Supplementary DN (Full/Partial/No DN) with channels (🟢🟠🔴)</td></tr>
+<tr><th>🚦 DN Approval</th><td>Green (3L), Orange (4L), Red (5L) channel approval flows</td></tr>
+<tr><th>💸 Payment</th><td>DN Payment, YEXP, BG/SD handling</td></tr>
+<tr><th>👥 Roles</th><td>ROW Executive, SCO, FC&A, ROW Lead, Construction Head, Sponsor & more</td></tr>
+</table>
+<br>Choose a topic below or type your question!`,
     'bot',
-    ["Create Application", "Roles & Tasks", "Search Span", "Split Span", "Merge Application", "Submit Application", "Joint Survey", "Processing Fee", "Glossary"]
+    ["Authority Creation","Rate Update","Create Application","Demand Note","DN Channels","Roles & Tasks","Process Overview","Glossary"]
   );
-}, 400);
+},400);
 </script>
 
 </body>
